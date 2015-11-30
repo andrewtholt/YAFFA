@@ -78,7 +78,7 @@
 
 #include <EEPROM.h>
 #include <avr/pgmspace.h>
-#include "YAFFA.h"
+#include "Yaffa.h"
 #include "Error_Codes.h"
 
 /******************************************************************************/
@@ -550,7 +550,7 @@ SKIP:                // common code to skip initial character
 /** freeMem returns the amount of free RAM that is left.                     **/
 /** This is a simplistic implementation.                                     **/
 /******************************************************************************/
-static unsigned int freeMem(void) { 
+unsigned int freeMem(void) { 
   extern unsigned int __bss_end;
   extern void *__brkval;
   int16_t dummy;
