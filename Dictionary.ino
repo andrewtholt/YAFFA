@@ -2149,6 +2149,73 @@ void _eeprom_write(void) {             // value address --
   value = (char) pop();
   EEPROM.write(address, value);
 }
+
+void print2Hex(uint8_t n) {
+    if( n < 0x10 ) {
+        Serial.print("0");
+    }
+    Serial.print(n,HEX);
+    Serial.print(" ");
+}
+
+void print4Hex(uint16_t n) {
+    if( n < 0x1000 ) {
+        Serial.print("0");
+    }
+    if( n < 0x100 ) {
+        Serial.print("0");
+    }
+    if( n < 0x10 ) {
+        Serial.print("0");
+    }
+    Serial.print(n,HEX);
+}
+
+void printHexLine(uint16_t offset) {
+    uint8_t i;
+
+    for(i=offset;i < (offset + 0x10); i++) {
+        print2Hex(EEPROM.read(i));
+    }
+}
+
+void printAsciiLine(uint16_t offset) {
+    uint8_t i;
+    uint8_t n;
+
+    for(i=offset;i < (offset + 0x10); i++) {
+        n=EEPROM.read(i);
+        if((n >= ' ') && (n < 0x7f)) {
+            Serial.write(n);
+        } else {
+            Serial.print(".");
+        }
+    }
+}
+
+const PROGMEM char eeDump_str[] = "eeDump";
+void _eeprom_dump(void) {             // address count -- 
+    uint16_t addr;
+    uint16_t cnt;
+    uint16_t i;
+    uint8_t n;
+    char buf[17];
+
+    cnt=(pop() + 0x0f) & 0xff0;
+    addr=pop() & 0xfff0;
+
+    // Only 1K EEPROM
+    for(i=addr;((i< (cnt+addr)) && (i < 1024));i+=0x10)  {
+        Serial.println();
+        print4Hex(i);
+        Serial.print(":");
+        printHexLine(i);
+
+        Serial.print(":");
+        printAsciiLine(i);
+    }
+    Serial.println();
+}
 #endif
 
 /********************************************************************************/
@@ -2379,6 +2446,7 @@ const PROGMEM flashEntry_t flashDict[] = {
 #ifdef TOOLS_SET
     { dot_s_str,          _dot_s,           NORMAL },
     { dump_str,           _dump,            NORMAL },
+    { eeDump_str,         _eeprom_dump,     NORMAL },
     { see_str,            _see,             NORMAL },
     { words_str,          _words,           NORMAL },
 #endif
