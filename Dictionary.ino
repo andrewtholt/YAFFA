@@ -20,6 +20,9 @@
 /**  along with YAFFA.  If not, see <http://www.gnu.org/licenses/>.          **/
 /**                                                                          **/
 /******************************************************************************/
+#include <SoftwareSerial.h>
+SoftwareSerial mySerial(8,9);  //RX, TX
+
 const char not_done_str[] PROGMEM = " NOT Implemented Yet \n\r";
 
 /******************************************************************************/
@@ -27,29 +30,29 @@ const char not_done_str[] PROGMEM = " NOT Implemented Yet \n\r";
 /******************************************************************************/
 const PROGMEM char jump_str[] = "jump";
 void _jump(void) {
-  ip = (cell_t*)((cell_t)ip + *ip);
+    ip = (cell_t*)((cell_t)ip + *ip);
 #ifdef DEBUG
-  debugNewIP();
+    debugNewIP();
 #endif
 }
 
 const PROGMEM char zjump_str[] = "zjump";
 void _zjump(void) {
 #ifdef DEBUG
-  debugValue(ip);
+    debugValue(ip);
 #endif
-  if(!pop()) ip = (cell_t*)((cell_t)ip + *ip);
-  else ip++;
+    if(!pop()) ip = (cell_t*)((cell_t)ip + *ip);
+    else ip++;
 #ifdef DEBUG
-  debugNewIP();
+    debugNewIP();
 #endif
 }
 
 const PROGMEM char subroutine_str[] = "subroutine";
 void _subroutine(void) {
-  *pDoes = (cell_t)*ip++;
+    *pDoes = (cell_t)*ip++;
 #ifdef DEBUG
-  debugValue(pDoes);
+    debugValue(pDoes);
 #endif
 }
 
@@ -60,9 +63,9 @@ const PROGMEM char do_sys_str[] = "do-sys";
 // on the return stack becomes unavailable until the loop-control parameters 
 // are discarded.
 void _do_sys(void) {
-  rPush(LOOP_SYS);
-  rPush(pop());   // push index on to return stack
-  rPush(pop());   // push limit on to return stack
+    rPush(LOOP_SYS);
+    rPush(pop());   // push index on to return stack
+    rPush(pop());   // push limit on to return stack
 }
 
 const PROGMEM char loop_sys_str[] = "loop-sys";
@@ -72,21 +75,21 @@ const PROGMEM char loop_sys_str[] = "loop-sys";
 // on the return stack becomes unavailable until the loop-control parameters 
 // are discarded.
 void _loop_sys(void) {
-  cell_t limit = rPop();    // fetch limit
-  cell_t index = rPop();    // fetch index
-  index++;
-  if(limit - index) {
-    rPush(index);
-    rPush(limit);
-    ip = (cell_t*)*ip;
-  } else {
-    ip++;
-    if(rPop() != LOOP_SYS) {
-      push(-22);
-      _throw();
-      return;
+    cell_t limit = rPop();    // fetch limit
+    cell_t index = rPop();    // fetch index
+    index++;
+    if(limit - index) {
+        rPush(index);
+        rPush(limit);
+        ip = (cell_t*)*ip;
+    } else {
+        ip++;
+        if(rPop() != LOOP_SYS) {
+            push(-22);
+            _throw();
+            return;
+        }
     }
-  }
 }
 
 const PROGMEM char leave_sys_str[] = "leave-sys";
@@ -95,16 +98,16 @@ const PROGMEM char leave_sys_str[] = "leave-sys";
 // if they are unavailable. Continue execution immediately following the 
 // innermost syntactically enclosing DO ... LOOP or DO ... +LOOP.
 void _leave_sys(void) {
-  rPop();    // fetch limit
-  rPop();    // fetch index
-  if(rPop() != LOOP_SYS) {
-    push(-22);
-    _throw();
-    return;
-  }
-  ip = (cell_t*)*ip;
+    rPop();    // fetch limit
+    rPop();    // fetch index
+    if(rPop() != LOOP_SYS) {
+        push(-22);
+        _throw();
+        return;
+    }
+    ip = (cell_t*)*ip;
 #ifdef DEBUG
-  debugNewIP();
+    debugNewIP();
 #endif
 }
 
@@ -115,21 +118,21 @@ const PROGMEM char plus_loop_sys_str[] = "plus_loop-sys";
 // on the return stack becomes unavailable until the loop-control parameters 
 // are discarded.
 void _plus_loop_sys(void) {
-  cell_t limit = rPop();    // fetch limit
-  cell_t index = rPop();    // fetch index
-  index += pop();
-  if(limit != index) {
-    rPush(index);
-    rPush(limit);
-    ip = (cell_t*)*ip;
-  } else {
-    ip++;
-    if(rPop() != LOOP_SYS) {
-      push(-22);
-      _throw();
-      return;
+    cell_t limit = rPop();    // fetch limit
+    cell_t index = rPop();    // fetch index
+    index += pop();
+    if(limit != index) {
+        rPush(index);
+        rPush(limit);
+        ip = (cell_t*)*ip;
+    } else {
+        ip++;
+        if(rPop() != LOOP_SYS) {
+            push(-22);
+            _throw();
+            return;
+        }
     }
-  }
 }
 
 /*******************************************************************************/
@@ -139,8 +142,8 @@ const PROGMEM char store_str[] = "!";
 // ( x a-addr --)
 // Store x at a-addr
 void _store(void) { 
-  addr_t address = pop();
-  *((cell_t*) address) = pop();
+    addr_t address = pop();
+    *((cell_t*) address) = pop();
 }
 
 const PROGMEM char number_sign_str[] = "#";
@@ -149,26 +152,26 @@ const PROGMEM char number_sign_str[] = "#";
 // n to external form and add the resulting character to the beginning of the
 // pictured numeric output string.
 void _number_sign(void) { 
-  udcell_t ud;
-  ud = (udcell_t)pop()<<sizeof(ucell_t)*8;
-  ud += (udcell_t)pop();
+    udcell_t ud;
+    ud = (udcell_t)pop()<<sizeof(ucell_t)*8;
+    ud += (udcell_t)pop();
 #ifdef DEBUG
-  serial_print_P(PSTR("  ud = "));
-  Serial.println(ud);
-  Serial.println(sizeof(ucell_t));
+    serial_print_P(PSTR("  ud = "));
+    Serial.println(ud);
+    Serial.println(sizeof(ucell_t));
 #endif
-  *--pPNO = pgm_read_byte(&charset[ud % base]);
-  ud /= base;
+    *--pPNO = pgm_read_byte(&charset[ud % base]);
+    ud /= base;
 #ifdef DEBUG
-  serial_print_P(PSTR("  new ud = "));
-  Serial.println(ud);
-  serial_print_P(PSTR("  pPNO = $"));
-  Serial.print((addr_t)pPNO, HEX);
-  serial_print_P(PSTR(" = "));
-  Serial.println((char)*pPNO);
+    serial_print_P(PSTR("  new ud = "));
+    Serial.println(ud);
+    serial_print_P(PSTR("  pPNO = $"));
+    Serial.print((addr_t)pPNO, HEX);
+    serial_print_P(PSTR(" = "));
+    Serial.println((char)*pPNO);
 #endif
-  push((ucell_t)ud);
-  push((ucell_t)(ud >> sizeof(ucell_t)*8));
+    push((ucell_t)ud);
+    push((ucell_t)(ud >> sizeof(ucell_t)*8));
 }
 
 const PROGMEM char number_sign_gt_str[] = "#>";
@@ -177,32 +180,32 @@ const PROGMEM char number_sign_gt_str[] = "#>";
 // string c-addr and u specify the resulting string. A program may replace 
 // characters within the string.
 void _number_sign_gt(void) {
-  _two_drop(); 
-  push((cell_t)pPNO);
-  push((cell_t)strlen(pPNO));
-  flags &= ~NUM_PROC;
+    _two_drop(); 
+    push((cell_t)pPNO);
+    push((cell_t)strlen(pPNO));
+    flags &= ~NUM_PROC;
 }
 
 const PROGMEM char number_sign_s_str[] = "#s";
 // ( ud1 -- ud2)
 void _number_sign_s(void) { 
-  udcell_t ud;
-  ud = (udcell_t)pop() << sizeof(ucell_t)*8;
-  ud += (udcell_t)pop();
-  while (ud) {
-      *--pPNO = pgm_read_byte(&charset[ud % base]);
-      ud /= base;
-  }
+    udcell_t ud;
+    ud = (udcell_t)pop() << sizeof(ucell_t)*8;
+    ud += (udcell_t)pop();
+    while (ud) {
+        *--pPNO = pgm_read_byte(&charset[ud % base]);
+        ud /= base;
+    }
 #ifdef DEBUG
-  serial_print_P(PSTR("  ud = "));
-  Serial.println(ud);
-  serial_print_P(PSTR("  pPNO = $"));
-  Serial.print((addr_t)pPNO, HEX);
-  serial_print_P(PSTR(" = "));
-  Serial.println((char)*pPNO);
+    serial_print_P(PSTR("  ud = "));
+    Serial.println(ud);
+    serial_print_P(PSTR("  pPNO = $"));
+    Serial.print((addr_t)pPNO, HEX);
+    serial_print_P(PSTR(" = "));
+    Serial.println((char)*pPNO);
 #endif
-  push((ucell_t)ud);
-  push((ucell_t)(ud >> sizeof(ucell_t)*8));
+    push((ucell_t)ud);
+    push((ucell_t)(ud >> sizeof(ucell_t)*8));
 }
 
 const PROGMEM char tick_str[] = "'";
@@ -215,30 +218,30 @@ void _tick(void) {
     _word();
     _find();
     pop();
-//  if (getToken()) {
-//    if (isWord(cTokenBuffer)) {
-//      push(w);
-//      return;
-//    }
-//  }
-//  push(-16);
-//  _throw();
+    //  if (getToken()) {
+    //    if (isWord(cTokenBuffer)) {
+    //      push(w);
+    //      return;
+    //    }
+    //  }
+    //  push(-16);
+    //  _throw();
 }
 
 const PROGMEM char paren_str[] = "(";
 // ( "ccc<paren>" -- )
 // imedeate
 void _paren(void) { 
-  push(')');
-  _word();
-  _drop();
+    push(')');
+    _word();
+    _drop();
 }
 
 const PROGMEM char star_str[] = "*";
 // ( n1|u1 n2|u2 -- n3|u3 )
 // multiply n1|u1 by n2|u2 giving the product n3|u3
 void _star(void) {
-  push(pop() * pop()); 
+    push(pop() * pop()); 
 }
 
 const PROGMEM char star_slash_str[] = "*/";
@@ -246,11 +249,11 @@ const PROGMEM char star_slash_str[] = "*/";
 // multiply n1 by n2 producing the double cell result d. Divide d by n3
 // giving the single-cell quotient n4.
 void _star_slash(void) {
-  cell_t n3 = pop();
-  cell_t n2 = pop();
-  cell_t n1 = pop();
-  dcell_t d = (dcell_t)n1 * (dcell_t)n2;
-  push((cell_t)(d / n3)); 
+    cell_t n3 = pop();
+    cell_t n2 = pop();
+    cell_t n1 = pop();
+    dcell_t d = (dcell_t)n1 * (dcell_t)n2;
+    push((cell_t)(d / n3)); 
 }
 
 const PROGMEM char star_slash_mod_str[] = "*/mod";
@@ -258,35 +261,35 @@ const PROGMEM char star_slash_mod_str[] = "*/mod";
 // multiply n1 by n2 producing the double cell result d. Divide d by n3
 // giving the single-cell remainder n4 and quotient n5.
 void _star_slash_mod(void) {
-  cell_t n3 = pop();
-  cell_t n2 = pop();
-  cell_t n1 = pop();
-  dcell_t d = (dcell_t)n1 * (dcell_t)n2;
-  push((cell_t)(d % n3)); 
-  push((cell_t)(d / n3)); 
+    cell_t n3 = pop();
+    cell_t n2 = pop();
+    cell_t n1 = pop();
+    dcell_t d = (dcell_t)n1 * (dcell_t)n2;
+    push((cell_t)(d % n3)); 
+    push((cell_t)(d / n3)); 
 }
 
 const PROGMEM char plus_str[] = "+";
 // ( n1|u1 n2|u2 -- n3|u3 )
 // add n2|u2 to n1|u1, giving the sum n3|u3
 void _plus(void) { 
-  cell_t x = pop();
-  cell_t y = pop();
-  push(x +  y);
+    cell_t x = pop();
+    cell_t y = pop();
+    push(x +  y);
 }
 
 const PROGMEM char plus_store_str[] = "+!";
 // ( n|u a-addr -- )
 // add n|u to the single cell number at a-addr
 void _plus_store(void) { 
-  addr_t address = pop();
-  if (address >= (addr_t)&forthSpace[0] && 
-      address < (addr_t)&forthSpace[FORTH_SIZE])
-    *((unsigned char*) address) += pop();
-  else {
-    push(-9);
-    _throw();
-  }
+    addr_t address = pop();
+    if (address >= (addr_t)&forthSpace[0] && 
+            address < (addr_t)&forthSpace[FORTH_SIZE])
+        *((unsigned char*) address) += pop();
+    else {
+        push(-9);
+        _throw();
+    }
 }
 
 const PROGMEM char plus_loop_str[] = "+loop";
@@ -303,27 +306,27 @@ const PROGMEM char plus_loop_str[] = "+loop";
 // of the loop. Otherwise, discard the current loop control parameters and 
 // continue execution immediately following the loop.
 void _plus_loop(void) { 
-  *(cell_t*)pHere = PLUS_LOOP_SYS_IDX;
+    *(cell_t*)pHere = PLUS_LOOP_SYS_IDX;
 #ifdef DEBUG
-  debugXT(pHere);
+    debugXT(pHere);
 #endif
-  pHere += sizeof(cell_t);
-  *(cell_t*)pHere = pop();
+    pHere += sizeof(cell_t);
+    *(cell_t*)pHere = pop();
 #ifdef DEBUG
-  debugXT(pHere);
+    debugXT(pHere);
 #endif
-  pHere += sizeof(cell_t);
-  cell_t* leave = (cell_t*)pop();
-  if (leave != (cell_t*)DO_SYS) {
-    if (stack[tos] == DO_SYS) {
-      *leave = (ucell_t)pHere;
-      pop();
-    } else {
-      push(-22);
-      _throw();
-      return;
+    pHere += sizeof(cell_t);
+    cell_t* leave = (cell_t*)pop();
+    if (leave != (cell_t*)DO_SYS) {
+        if (stack[tos] == DO_SYS) {
+            *leave = (ucell_t)pHere;
+            pop();
+        } else {
+            push(-22);
+            _throw();
+            return;
+        }
     }
-  }
 }
 
 const PROGMEM char comma_str[] = ",";
@@ -333,28 +336,28 @@ const PROGMEM char comma_str[] = ",";
 // finishes execution. An ambiguous condition exists if the data-space pointer
 // is not aligned prior to execution of ,.
 void _comma(void) { 
-//  if (((cell_t)pHere & 1) == 0) {
+    //  if (((cell_t)pHere & 1) == 0) {
     *(cell_t*)pHere = pop();
     pHere += sizeof(cell_t);
-//  } else {
-//    push(-23);
-//    _throw();
-//  }
+    //  } else {
+    //    push(-23);
+    //    _throw();
+    //  }
 }
 
 const PROGMEM char minus_str[] = "-";
 // ( n1|u1 n2|u2 -- n3|u3 )
 void _minus(void) {
-  cell_t temp = pop();
-  push(pop() -  temp);
+    cell_t temp = pop();
+    push(pop() -  temp);
 }
 
 const PROGMEM char dot_str[] = ".";
 // ( n -- )
 // display n in free field format
 void _dot(void) { 
-  w = pop();
-  displayValue();
+    w = pop();
+    displayValue();
 }
 
 const PROGMEM char dot_quote_str[] = ".\x22"; 
@@ -364,141 +367,141 @@ const PROGMEM char dot_quote_str[] = ".\x22";
 // Run-Time ( -- )
 // Display ccc. 
 void _dot_quote(void) {
-  uint8_t i;
-  char length;
-  if (flags & EXECUTE) {
-    Serial.print((char*)ip);
-    cell_t len = strlen((char*)ip) + 1;  // include null terminator
-    ALIGN(len);
-    ip = (cell_t*)((cell_t)ip + len);
-  }
-  else if (state) {
-    cDelimiter = '"';
-    if(!getToken()) {
-      push(-16);
-      _throw();
+    uint8_t i;
+    char length;
+    if (flags & EXECUTE) {
+        Serial.print((char*)ip);
+        cell_t len = strlen((char*)ip) + 1;  // include null terminator
+        ALIGN(len);
+        ip = (cell_t*)((cell_t)ip + len);
     }
-    length = strlen(cTokenBuffer);
-    *(cell_t*)pHere = (cell_t)DOT_QUOTE_IDX;
+    else if (state) {
+        cDelimiter = '"';
+        if(!getToken()) {
+            push(-16);
+            _throw();
+        }
+        length = strlen(cTokenBuffer);
+        *(cell_t*)pHere = (cell_t)DOT_QUOTE_IDX;
 #ifdef DEBUG
-    debugXT(pHere);
+        debugXT(pHere);
 #endif
-    pHere += sizeof(cell_t);
+        pHere += sizeof(cell_t);
 #ifdef DEBUG
-    serial_print_P(PSTR("\r\n  String @ $"));
-    char* str = (char*)pHere;
-    Serial.print((ucell_t)str, HEX);
+        serial_print_P(PSTR("\r\n  String @ $"));
+        char* str = (char*)pHere;
+        Serial.print((ucell_t)str, HEX);
 #endif
-    for (uint8_t i = 0; i < length; i++) {
-      *(char*)pHere++ = cTokenBuffer[i];
+        for (uint8_t i = 0; i < length; i++) {
+            *(char*)pHere++ = cTokenBuffer[i];
+        }
+        *(char*)pHere++ = NULL;    // Terminate String
+#ifdef DEBUG
+        serial_print_P(PSTR(": "));
+        Serial.print(str);
+#endif
+        ALIGN_P(pHere);  // re- align the pHere for any new code
+        cDelimiter = ' ';
     }
-    *(char*)pHere++ = NULL;    // Terminate String
-#ifdef DEBUG
-    serial_print_P(PSTR(": "));
-    Serial.print(str);
-#endif
-    ALIGN_P(pHere);  // re- align the pHere for any new code
-    cDelimiter = ' ';
-  }
 }
 
 const PROGMEM char slash_str[] = "/";
 // ( n1 n2 -- n3 )
 // divide n1 by n2 giving a single cell quotient n3
 void _slash(void) { 
-  cell_t temp = pop();
-  if (temp) 
-    push(pop() /  temp);
-  else {
-    push(-10);
-    _throw();
-  }
+    cell_t temp = pop();
+    if (temp) 
+        push(pop() /  temp);
+    else {
+        push(-10);
+        _throw();
+    }
 }
 
 const PROGMEM char slash_mod_str[] = "/mod";
 // ( n1 n2 -- n3 n4)
 // divide n1 by n2 giving a single cell remainder n3 and quotient n4
 void _slash_mod(void) { 
-  cell_t n2 = pop();
-  cell_t n1 = pop();
-  if (n2) {
-    push(n1 %  n2);  
-    push(n1 /  n2);  
-  } else {
-    push(-10);
-    _throw();
-  }
+    cell_t n2 = pop();
+    cell_t n1 = pop();
+    if (n2) {
+        push(n1 %  n2);  
+        push(n1 /  n2);  
+    } else {
+        push(-10);
+        _throw();
+    }
 }
 
 const PROGMEM char zero_less_str[] = "0<";
 // ( n -- flag )
 // flag is true if and only if n is less than zero.
 void _zero_less(void) {
-  if (pop() < 0) push(TRUE);
-  else push(FALSE);
+    if (pop() < 0) push(TRUE);
+    else push(FALSE);
 }
 
 const PROGMEM char zero_equal_str[] = "0=";
 // ( n -- flag )
 // flag is true if and only if n is equal to zero.
 void _zero_equal(void) {
-  if (pop() == 0) push(TRUE);
-  else push(FALSE);
+    if (pop() == 0) push(TRUE);
+    else push(FALSE);
 }
 
 const PROGMEM char one_plus_str[] = "1+";
 // ( n1|u1 -- n2|u2 )
 // add one to n1|u1 giving sum n2|u2.
 void _one_plus(void) { 
-  push(pop() + 1);
+    push(pop() + 1);
 }
 
 const PROGMEM char one_minus_str[] = "1-";
 // ( n1|u1 -- n2|u2 )
 // subtract one to n1|u1 giving sum n2|u2.
 void _one_minus(void) { 
-  push(pop() - 1);
+    push(pop() - 1);
 }
 
 const PROGMEM char two_store_str[] = "2!";
 // ( x1 x2 a-addr --)
 // Store the cell pair x1 x2 at a-addr, with x2 at a-addr and x1 at a-addr+1
 void _two_store(void) { 
-  addr_t address = pop();
-  if (address >= (addr_t)&forthSpace[0] && 
-      address < (addr_t)&forthSpace[FORTH_SIZE - 4]) {
-    *(cell_t*)address++ = pop();
-    *(cell_t*)address = pop();
-  } else {
-    push(-9);
-    _throw();
-  }
+    addr_t address = pop();
+    if (address >= (addr_t)&forthSpace[0] && 
+            address < (addr_t)&forthSpace[FORTH_SIZE - 4]) {
+        *(cell_t*)address++ = pop();
+        *(cell_t*)address = pop();
+    } else {
+        push(-9);
+        _throw();
+    }
 }
 
 const PROGMEM char two_star_str[] = "2*";
 // ( x1 -- x2 )
 // x2 is the result of shifting x1 one bit to toward the MSB
 void _two_star(void) { 
-  push(pop() << 1);
+    push(pop() << 1);
 }
 
 const PROGMEM char two_slash_str[] = "2/";
 // ( x1 -- x2 )
 // x2 is the result of shifting x1 one bit to toward the LSB
 void _two_slash(void) { 
-  push(pop() >> 1);
+    push(pop() >> 1);
 }
 
 const PROGMEM char two_fetch_str[] = "2@";  // \x40 == '@'
 // ( a-addr -- x1 x2 )
 // Fetch cell pair x1 x2 at a-addr. x2 is at a-addr, and x1 is at a-addr+1
 void _two_fetch(void) { 
-  addr_t address = pop();
-  cell_t value = *(unsigned char*)address;
-  push(value);
-  address += sizeof(cell_t);
-  value = *(unsigned char*)address;
-  push(value);
+    addr_t address = pop();
+    cell_t value = *(unsigned char*)address;
+    push(value);
+    address += sizeof(cell_t);
+    value = *(unsigned char*)address;
+    push(value);
 }
 
 const PROGMEM char two_drop_str[] = "2drop";
@@ -525,14 +528,14 @@ void _two_over(void) {
 const PROGMEM char two_swap_str[] = "2swap";
 // ( x1 x2 x3 x4 -- x3 x4 x1 x2 )
 void _two_swap(void) {
-  cell_t x4 = pop();
-  cell_t x3 = pop();
-  cell_t x2 = pop();
-  cell_t x1 = pop();
-  push(x3);
-  push(x4);
-  push(x1);
-  push(x2);
+    cell_t x4 = pop();
+    cell_t x3 = pop();
+    cell_t x2 = pop();
+    cell_t x1 = pop();
+    push(x3);
+    push(x4);
+    push(x1);
+    push(x2);
 }
 
 const PROGMEM char colon_str[] = ":";
@@ -542,9 +545,9 @@ const PROGMEM char colon_str[] = ":";
 // and start the current definition, producing a colon-sys. Append the 
 // initiation semantics given below to the current definition....
 void _colon(void) {
-  state = TRUE;
-  push(COLON_SYS);
-  openEntry();
+    state = TRUE;
+    push(COLON_SYS);
+    openEntry();
 }
 
 const PROGMEM char semicolon_str[] = ";";
@@ -553,49 +556,49 @@ const PROGMEM char semicolon_str[] = ";";
 // Compilation: (C: colon-sys -- )
 // Run-time: ( -- ) (R: nest-sys -- )
 void _semicolon(void) {
-  if (pop() != COLON_SYS) {
-    push(-22);
-    _throw();
-    return;
-  }
-  closeEntry();
-  state = FALSE;
+    if (pop() != COLON_SYS) {
+        push(-22);
+        _throw();
+        return;
+    }
+    closeEntry();
+    state = FALSE;
 }
 
 const PROGMEM char lt_str[] = "<";
 // ( n1 n2 -- flag )
 void _lt(void) { 
-  if (pop() > pop()) push(TRUE); 
-  else push(FALSE);  
+    if (pop() > pop()) push(TRUE); 
+    else push(FALSE);  
 }
 
 const PROGMEM char lt_number_sign_str[] = "<#";
 // ( -- )
 // Initialize the pictured numeric output conversion process.
 void _lt_number_sign(void) { 
-  pPNO = (char*)pHere + HOLD_SIZE + 1;
-  *pPNO = NULL;
+    pPNO = (char*)pHere + HOLD_SIZE + 1;
+    *pPNO = NULL;
 #ifdef DEBUG
-  Serial.print("pPNO = $");
-  Serial.println((addr_t)pPNO, HEX);
+    Serial.print("pPNO = $");
+    Serial.println((addr_t)pPNO, HEX);
 #endif
-  flags |= NUM_PROC;
+    flags |= NUM_PROC;
 }
 
 const PROGMEM char eq_str[] = "=";
 // ( x1 x2 -- flag )
 // flag is true if and only if x1 is bit for bit the same as x2
 void _eq(void) {
-  if (pop() == pop()) push(TRUE);
-  else push(FALSE);
+    if (pop() == pop()) push(TRUE);
+    else push(FALSE);
 }
 
 const PROGMEM char gt_str[] = ">";
 // ( n1 n2 -- flag )
 // flag is true if and only if n1 is greater than n2
 void _gt(void) {
-  if (pop() < pop()) push(TRUE);
-  else push(FALSE);  
+    if (pop() < pop()) push(TRUE);
+    else push(FALSE);  
 }
 
 const PROGMEM char to_body_str[] = ">body";
@@ -603,66 +606,66 @@ const PROGMEM char to_body_str[] = ">body";
 // a-addr is the data-field address corresponding to xt. An ambiguous condition
 // exists if xt is not for a word defined by CREATE.
 void _to_body(void) {
-  cell_t* xt = (cell_t*)pop();
-  if ((cell_t)xt > 0xFF) {
-    if (*xt++ == LITERAL_IDX) {
-      push(*xt);
-      return;
+    cell_t* xt = (cell_t*)pop();
+    if ((cell_t)xt > 0xFF) {
+        if (*xt++ == LITERAL_IDX) {
+            push(*xt);
+            return;
+        }
     }
-  }
-  push(-31);
-  _throw();
+    push(-31);
+    _throw();
 }
 
 const PROGMEM char to_in_str[] = ">in";
 // ( -- a-addr )
 void _to_in(void) {
-  push((cell_t)&cpToIn); 
+    push((cell_t)&cpToIn); 
 }
 
 const PROGMEM char to_number_str[] = ">number";
 // ( ud1 c-addr1 u1 -- ud2 c-addr u2 )
 void _to_number(void) {
-  serial_print_P(not_done_str); 
+    serial_print_P(not_done_str); 
 }
 
 const PROGMEM char to_r_str[] = ">r";
 // ( x -- ) (R: -- x )
 void _to_r(void) {
 #ifdef DEBUG
-  cell_t temp = pop();
-  serial_print_P(PSTR("  Moving $"));
-  Serial.print(temp, HEX);
-  serial_print_P(PSTR(" To Return Stack\r\n"));
-  rPush(temp);
+    cell_t temp = pop();
+    serial_print_P(PSTR("  Moving $"));
+    Serial.print(temp, HEX);
+    serial_print_P(PSTR(" To Return Stack\r\n"));
+    rPush(temp);
 #else
-  rPush(pop());
+    rPush(pop());
 #endif
 }
 
 const PROGMEM char question_dup_str[] = "?dup";
 // ( x -- 0 | x x )
 void _question_dup(void) {
-  if (stack[tos]) {
-    push(stack[tos]);
-  } else {
-    pop();
-    push(0);
-  }
+    if (stack[tos]) {
+        push(stack[tos]);
+    } else {
+        pop();
+        push(0);
+    }
 }
 
 const PROGMEM char fetch_str[] = "@";
 // ( a-addr -- x1 )
 // Fetch cell x1 at a-addr. 
 void _fetch(void) { 
-  addr_t address = pop();
-//  if ((address & 1) == 0) {
+    addr_t address = pop();
+    //  if ((address & 1) == 0) {
     cell_t value = *(cell_t*)address;
     push(value);
-//  } else {
-//    push(-23);
-//    _throw();
-//  }
+    //  } else {
+    //    push(-23);
+    //    _throw();
+    //  }
 }
 
 const PROGMEM char abort_str[] = "abort";
@@ -670,8 +673,8 @@ const PROGMEM char abort_str[] = "abort";
 // Empty the data stack and preform the function of QUIT, which includes emptying
 // the return stack, without displaying a message.
 void _abort(void) {
-  push(-1);
-  _throw();
+    push(-1);
+    _throw();
 }
 
 const PROGMEM char abort_quote_str[] = "abort\x22";
@@ -684,37 +687,37 @@ const PROGMEM char abort_quote_str[] = "abort\x22";
 // preform an implementation-defined abort sequence that included the function
 // of ABORT.
 void _abort_quote(void) {
-  *(cell_t*)pHere = ZJUMP_IDX;
+    *(cell_t*)pHere = ZJUMP_IDX;
 #ifdef DEBUG
-  debugXT(pHere);
+    debugXT(pHere);
 #endif
-  pHere += sizeof(cell_t);
-  push((cell_t)pHere);  // Push the address for our origin
-  *(cell_t*)pHere = 0;
+    pHere += sizeof(cell_t);
+    push((cell_t)pHere);  // Push the address for our origin
+    *(cell_t*)pHere = 0;
 #ifdef DEBUG
-  debugXT(pHere);
+    debugXT(pHere);
 #endif
-  pHere += sizeof(cell_t);
-  _dot_quote();
-  *(cell_t*)pHere = LITERAL_IDX;
+    pHere += sizeof(cell_t);
+    _dot_quote();
+    *(cell_t*)pHere = LITERAL_IDX;
 #ifdef DEBUG
-  debugXT(pHere);
+    debugXT(pHere);
 #endif
-  pHere += sizeof(cell_t);
-  *(cell_t*)pHere = -2;
+    pHere += sizeof(cell_t);
+    *(cell_t*)pHere = -2;
 #ifdef DEBUG
-  debugXT(pHere);
+    debugXT(pHere);
 #endif
-  pHere += sizeof(cell_t);
-  *(cell_t*)pHere = THROW_IDX;
+    pHere += sizeof(cell_t);
+    *(cell_t*)pHere = THROW_IDX;
 #ifdef DEBUG
-  debugXT(pHere);
+    debugXT(pHere);
 #endif
-  pHere += sizeof(cell_t);
-  cell_t* orig = (cell_t*)pop();
-  *orig = (cell_t)pHere - (cell_t)orig;
+    pHere += sizeof(cell_t);
+    cell_t* orig = (cell_t*)pop();
+    *orig = (cell_t)pHere - (cell_t)orig;
 #ifdef DEBUG
-  debugValue(pHere);
+    debugValue(pHere);
 #endif
 }
 
@@ -722,30 +725,30 @@ const PROGMEM char abs_str[] = "abs";
 // ( n -- u)
 // Runt-Time: 
 void _abs(void) {
-  cell_t n = pop();
-  push(n < 0 ? 0 - n : n);
+    cell_t n = pop();
+    push(n < 0 ? 0 - n : n);
 }
 
 const PROGMEM char accept_str[] = "accept";
 // ( c-addr +n1 -- +n2 )
 void _accept(void) {
-  cell_t length = pop(); 
-  char* addr = (char*)pop();
-  length = getLine(addr, length);
-  push(length);
+    cell_t length = pop(); 
+    char* addr = (char*)pop();
+    length = getLine(addr, length);
+    push(length);
 }
 
 const PROGMEM char align_str[] = "align";
 // ( -- )
 // if the data-space pointer is not aligned, reserve enough space to align it.
 void _align(void) {
-  ALIGN_P(pHere);
+    ALIGN_P(pHere);
 }
 
 const PROGMEM char aligned_str[] = "aligned";
 // ( addr -- a-addr)
 void _aligned(void) {
-  push((pop() + 1) & -2);
+    push((pop() + 1) & -2);
 }
 
 const PROGMEM char allot_str[] = "allot";
@@ -754,28 +757,28 @@ const PROGMEM char allot_str[] = "allot";
 // than zero, release |n| address units of data space. If n is zero, leave the 
 // data-space pointer unchanged.
 void _allot(void) {
-  uint8_t* pNewHere = pHere + pop();
-  // Check that the new pHere is not outside of the forth space
-  if (pNewHere >= &forthSpace[0] &&
-      pNewHere < &forthSpace[FORTH_SIZE]) {
-    pHere = pNewHere;      // Save the valid address
-  } else {                 // Throw an exception 
-    push(-9);
-    _throw();
-  }
+    uint8_t* pNewHere = pHere + pop();
+    // Check that the new pHere is not outside of the forth space
+    if (pNewHere >= &forthSpace[0] &&
+            pNewHere < &forthSpace[FORTH_SIZE]) {
+        pHere = pNewHere;      // Save the valid address
+    } else {                 // Throw an exception 
+        push(-9);
+        _throw();
+    }
 }
 
 const PROGMEM char and_str[] = "and";
 // ( x1 x2 -- x3 )
 // x3 is the bit by bit logical and of x1 with x2
 void _and(void) {
-  push(pop() & pop());
+    push(pop() & pop());
 }
 
 const PROGMEM char base_str[] = "base";
 // ( -- a-addr)
 void _base(void) {
-  push((cell_t)&base);
+    push((cell_t)&base);
 }
 
 const PROGMEM char begin_str[] = "begin";
@@ -786,48 +789,48 @@ const PROGMEM char begin_str[] = "begin";
 // Run-time: ( -- )
 // Continue execution.
 void _begin(void) {
-  push((cell_t)pHere);
-  *(cell_t*)pHere = 0;
+    push((cell_t)pHere);
+    *(cell_t*)pHere = 0;
 }
 
 const PROGMEM char bl_str[] = "bl";
 // ( -- char )
 // char is the character value for a space.
 void _bl(void) {
-  push(' ');
+    push(' ');
 }
 
 const PROGMEM char c_store_str[] = "c!";
 // ( char c-addr -- )
 void _c_store(void) {
-  volatile uint8_t* address = (uint8_t*)pop();
-  *address = (uint8_t)pop();
+    volatile uint8_t* address = (uint8_t*)pop();
+    *address = (uint8_t)pop();
 }
 
 const PROGMEM char c_comma_str[] = "c,";
 // ( char -- )
 void _c_comma(void) {
-  *(char*)pHere++ = (char)pop();
+    *(char*)pHere++ = (char)pop();
 }
 
 const PROGMEM char c_fetch_str[] = "c@";
 // ( c-addr -- char )
 void _c_fetch(void) {
-  volatile uint8_t *address = (uint8_t*)pop();
-  push(*address);
+    volatile uint8_t *address = (uint8_t*)pop();
+    push(*address);
 }
 
 const PROGMEM char cell_plus_str[] = "cell+";
 // ( a-addr1 -- a-addr2 )
 void _cell_plus(void) {
-  push((addr_t)(pop()+ sizeof(cell_t)));
+    push((addr_t)(pop()+ sizeof(cell_t)));
 }
 
 const PROGMEM char cells_str[] = "cells";
 // ( n1 -- n2 )
 // n2 is the size in address units of n1 cells.
 void _cells(void) {
-  push(pop()*sizeof(cell_t));
+    push(pop()*sizeof(cell_t));
 }
 
 const PROGMEM char char_str[] = "char";
@@ -835,17 +838,17 @@ const PROGMEM char char_str[] = "char";
 // Skip leading space delimiters. Parse name delimited by a space. Put the value
 // of its first character onto the stack.
 void _char(void) {
-  if(getToken()) push(cTokenBuffer[0]);
-  else {
-    push(-16);
-    _throw();
-  }
+    if(getToken()) push(cTokenBuffer[0]);
+    else {
+        push(-16);
+        _throw();
+    }
 }
 
 const PROGMEM char char_plus_str[] = "char+";
 // ( c-addr1 -- c-addr2 )
 void _char_plus(void) {
-  push(pop() + 1);
+    push(pop() + 1);
 }
 
 const PROGMEM char chars_str[] = "chars";
@@ -857,33 +860,33 @@ void _chars(void) {
 const PROGMEM char constant_str[] = "constant";
 // ( x"<spaces>name" --  )
 void _constant(void) {
-  openEntry();
-  *(cell_t*)pHere = (cell_t)LITERAL_IDX;
+    openEntry();
+    *(cell_t*)pHere = (cell_t)LITERAL_IDX;
 #ifdef DEBUG
-  debugXT(pHere);
+    debugXT(pHere);
 #endif
-  pHere += sizeof(cell_t);
-  *(cell_t*)pHere = pop();
+    pHere += sizeof(cell_t);
+    *(cell_t*)pHere = pop();
 #ifdef DEBUG
-  debugXT(pHere);
+    debugXT(pHere);
 #endif
-  pHere += sizeof(cell_t);
-  closeEntry();
+    pHere += sizeof(cell_t);
+    closeEntry();
 }
 
 const PROGMEM char count_str[] = "count";
 // ( c-addr1 -- c-addr2 u )
 void _count(void) {
-  char* addr = (char*)pop();
-  push((cell_t)(addr+1));
-  push(*addr);
+    char* addr = (char*)pop();
+    push((cell_t)(addr+1));
+    push(*addr);
 }
 
 const PROGMEM char cr_str[] = "cr";
 // ( -- )
 // Carriage Return
 void _cr(void) { 
-  Serial.println();
+    Serial.println();
 }
 
 const PROGMEM char create_str[] = "create";
@@ -897,45 +900,45 @@ const PROGMEM char create_str[] = "create";
 // a-addr is the address of name's data field. The execution semantics of name may 
 // be extended by using DOES>.
 void _create(void) {
-  openEntry();
-  *(cell_t*)pHere = LITERAL_IDX;
-  pHere += sizeof(cell_t);
-  // Location of Data Field at the end of the definition.
-  *(cell_t*)pHere = (cell_t)pHere + 3 * sizeof(cell_t); 
-  pHere += sizeof(cell_t);
-  *(cell_t*)pHere = EXIT_IDX;   // Store an extra exit reference so 
-                                // that it can be replace by a 
-                                // subroutine pointer created by DOES>
-  pDoes = (cell_t*)pHere;       // Save this location for uses by subroutine.
-  pHere += sizeof(cell_t);
-  if (!state) closeEntry();           // Close the entry if interpreting
+    openEntry();
+    *(cell_t*)pHere = LITERAL_IDX;
+    pHere += sizeof(cell_t);
+    // Location of Data Field at the end of the definition.
+    *(cell_t*)pHere = (cell_t)pHere + 3 * sizeof(cell_t); 
+    pHere += sizeof(cell_t);
+    *(cell_t*)pHere = EXIT_IDX;   // Store an extra exit reference so 
+    // that it can be replace by a 
+    // subroutine pointer created by DOES>
+    pDoes = (cell_t*)pHere;       // Save this location for uses by subroutine.
+    pHere += sizeof(cell_t);
+    if (!state) closeEntry();           // Close the entry if interpreting
 }
 
 const PROGMEM char decimal_str[] = "decimal";
 // ( -- )
 // Set BASE to 10
 void _decimal(void) { // value --
-  base = 10;
+    base = 10;
 }
 
 const PROGMEM char depth_str[] = "depth";
 // ( -- +n )
 // +n is the number of single cells on the stack before +n was placed on it.
 void _depth(void) { // value --
-  push(tos + 1);
+    push(tos + 1);
 }
 
 const PROGMEM char do_str[] = "do";
 // Compilation: (C: -- do-sys)
 // Run-Time: ( n1|u1 n2|u2 -- ) (R: -- loop-sys )
 void _do(void) {
-  push(DO_SYS);
-  *(cell_t*)pHere = DO_SYS_IDX;
+    push(DO_SYS);
+    *(cell_t*)pHere = DO_SYS_IDX;
 #ifdef DEBUG
-  debugXT(pHere);
+    debugXT(pHere);
 #endif
-  pHere += sizeof(cell_t);
-  push((cell_t)pHere); // store the origin address of the do loop 
+    pHere += sizeof(cell_t);
+    push((cell_t)pHere); // store the origin address of the do loop 
 }
 
 const PROGMEM char does_str[] = "does>";
@@ -943,23 +946,23 @@ const PROGMEM char does_str[] = "does>";
 // Run-Time: ( -- ) (R: nest-sys1 -- )
 // Initiation: ( i*x -- i*x a-addr ) (R: -- next-sys2 )
 void _does(void) {
-  *(cell_t*)pHere = SUBROUTINE_IDX;
+    *(cell_t*)pHere = SUBROUTINE_IDX;
 #ifdef DEBUG
-  debugXT(pHere);
+    debugXT(pHere);
 #endif
-  pHere += sizeof(cell_t);
-  // Store location for a subroutine call
-  *(cell_t*)pHere = (cell_t)pHere + 2 * sizeof(cell_t);  
+    pHere += sizeof(cell_t);
+    // Store location for a subroutine call
+    *(cell_t*)pHere = (cell_t)pHere + 2 * sizeof(cell_t);  
 #ifdef DEBUG
-  debugXT(pHere);
+    debugXT(pHere);
 #endif
-  pHere += sizeof(cell_t);
-  *(cell_t*)pHere = EXIT_IDX;
+    pHere += sizeof(cell_t);
+    *(cell_t*)pHere = EXIT_IDX;
 #ifdef DEBUG
-  debugXT(pHere);
+    debugXT(pHere);
 #endif
-  pHere += sizeof(cell_t);
-  // Start Subroutine coding
+    pHere += sizeof(cell_t);
+    // Start Subroutine coding
 }
 
 const PROGMEM char drop_str[] = "drop";
@@ -981,17 +984,17 @@ const PROGMEM char else_str[] = "else";
 // Compilation: (C: orig1 -- orig2)
 // Run-Time: ( -- )
 void _else(void) {
-  cell_t* orig = (cell_t*)pop();
-  *(cell_t*)pHere = JUMP_IDX;
+    cell_t* orig = (cell_t*)pop();
+    *(cell_t*)pHere = JUMP_IDX;
 #ifdef DEBUG
-  debugXT(pHere);
+    debugXT(pHere);
 #endif
-  pHere += sizeof(cell_t);
-  push((cell_t)pHere);
-  pHere += sizeof(cell_t);
-  *orig = (cell_t)pHere - (cell_t)orig;
+    pHere += sizeof(cell_t);
+    push((cell_t)pHere);
+    pHere += sizeof(cell_t);
+    *orig = (cell_t)pHere - (cell_t)orig;
 #ifdef DEBUG
-  debugValue(orig);
+    debugValue(orig);
 #endif
 }
 
@@ -999,7 +1002,7 @@ const PROGMEM char emit_str[] = "emit";
 // ( x -- )
 // display x as a character
 void _emit(void) {
-  Serial.print((char) pop());
+    Serial.print((char) pop());
 }
 
 const PROGMEM char environment_str[] = "environment?";
@@ -1013,64 +1016,64 @@ const PROGMEM char environment_str[] = "environment?";
 // otherwise, the flag is true and i*x returned is the of the type specified in 
 // the table for the attribute queried.
 void _environment(void) {
-  char length = (char)pop();
-  char* pStr = (char*)pop();
-  if (length && length < STRING_SIZE) {
-    if (!strcmp_P(pStr, PSTR("/counted-string"))) {
-      push(STRING_SIZE);
-      return;
+    char length = (char)pop();
+    char* pStr = (char*)pop();
+    if (length && length < STRING_SIZE) {
+        if (!strcmp_P(pStr, PSTR("/counted-string"))) {
+            push(STRING_SIZE);
+            return;
+        }
+        if (!strcmp_P(pStr, PSTR("/hold"))) {
+            push(HOLD_SIZE); 
+            return;
+        }
+        if (!strcmp_P(pStr, PSTR("address-unit-bits"))) {
+            push(ADDRESS_BITS); 
+            return;
+        }
+        if (!strcmp_P(pStr, PSTR("core"))) {
+            push(FALSE); 
+            return;
+        }
+        if (!strcmp_P(pStr, PSTR("core-ext"))) {
+            push(FALSE); 
+            return;
+        }
+        if (!strcmp_P(pStr, PSTR("floored"))) {
+            push(FLOORED); 
+            return;
+        }
+        if (!strcmp_P(pStr, PSTR("max-char"))) {
+            push(MAX_CHAR); 
+            return;
+        }
+        if (!strcmp_P(pStr, PSTR("max-d"))) {
+            push(MAX_D); 
+            return;
+        }
+        if (!strcmp_P(pStr, PSTR("max-n"))) {
+            push(MAX_N); 
+            return;
+        }
+        if (!strcmp_P(pStr, PSTR("max-u"))) {
+            push(MAX_U); 
+            return;
+        }
+        if (!strcmp_P(pStr, PSTR("max-ud"))) {
+            push(MAX_UD); 
+            return;
+        }
+        if (!strcmp_P(pStr, PSTR("return-stack-size"))) {
+            push(RSTACK_SIZE); 
+            return;
+        }
+        if (!strcmp_P(pStr, PSTR("stack-size"))) {
+            push(STACK_SIZE); 
+            return;
+        }
     }
-    if (!strcmp_P(pStr, PSTR("/hold"))) {
-      push(HOLD_SIZE); 
-      return;
-    }
-    if (!strcmp_P(pStr, PSTR("address-unit-bits"))) {
-      push(ADDRESS_BITS); 
-      return;
-    }
-    if (!strcmp_P(pStr, PSTR("core"))) {
-      push(FALSE); 
-      return;
-    }
-    if (!strcmp_P(pStr, PSTR("core-ext"))) {
-      push(FALSE); 
-      return;
-    }
-    if (!strcmp_P(pStr, PSTR("floored"))) {
-      push(FLOORED); 
-      return;
-    }
-    if (!strcmp_P(pStr, PSTR("max-char"))) {
-      push(MAX_CHAR); 
-      return;
-    }
-    if (!strcmp_P(pStr, PSTR("max-d"))) {
-      push(MAX_D); 
-      return;
-    }
-    if (!strcmp_P(pStr, PSTR("max-n"))) {
-      push(MAX_N); 
-      return;
-    }
-    if (!strcmp_P(pStr, PSTR("max-u"))) {
-      push(MAX_U); 
-      return;
-    }
-    if (!strcmp_P(pStr, PSTR("max-ud"))) {
-      push(MAX_UD); 
-      return;
-    }
-    if (!strcmp_P(pStr, PSTR("return-stack-size"))) {
-      push(RSTACK_SIZE); 
-      return;
-    }
-    if (!strcmp_P(pStr, PSTR("stack-size"))) {
-      push(STACK_SIZE); 
-      return;
-    }
-  }
-  push(-13);
-  _throw();
+    push(-13);
+    _throw();
 }
 
 const PROGMEM char evaluate_str[] = "evaluate";
@@ -1081,18 +1084,18 @@ const PROGMEM char evaluate_str[] = "evaluate";
 // is empty, restore the prior source specification. Other stack effects are due
 // to the words EVALUATEd.
 void _evaluate(void) {
-  char* tempSource = cpSource;
-  char* tempSourceEnd = cpSourceEnd;
-  char* tempToIn = cpToIn;
-  
-  uint8_t length = pop();
-  cpSource = (char*)pop();
-  cpSourceEnd = cpSource + length;
-  cpToIn = cpSource;
-  interpreter();
-  cpSource = tempSource;
-  cpSourceEnd = tempSourceEnd;
-  cpToIn = tempToIn;
+    char* tempSource = cpSource;
+    char* tempSourceEnd = cpSourceEnd;
+    char* tempToIn = cpToIn;
+
+    uint8_t length = pop();
+    cpSource = (char*)pop();
+    cpSourceEnd = cpSource + length;
+    cpToIn = cpSource;
+    interpreter();
+    cpSource = tempSource;
+    cpSourceEnd = tempSourceEnd;
+    cpToIn = tempToIn;
 }
 
 const PROGMEM char execute_str[] = "execute";
@@ -1100,17 +1103,17 @@ const PROGMEM char execute_str[] = "execute";
 // Remove xt from the stack and preform the semantics identified by it. Other
 // stack effects are due to the word EXECUTEd
 void _execute(void) {
-  func function;
-  w = pop();
-  if (w > 255) {
-    rPush(0);            // Push 0 as our return address
-    ip = (cell_t *)w;          // set the ip to the XT (memory location)
-    executeWord();
-  } else {
-    function = (func) pgm_read_word(&(flashDict[w - 1].function));
-    function();
-    if (errorCode) return;
-  }
+    func function;
+    w = pop();
+    if (w > 255) {
+        rPush(0);            // Push 0 as our return address
+        ip = (cell_t *)w;          // set the ip to the XT (memory location)
+        executeWord();
+    } else {
+        function = (func) pgm_read_word(&(flashDict[w - 1].function));
+        function();
+        if (errorCode) return;
+    }
 }
 
 const PROGMEM char exit_str[] = "exit";
@@ -1120,9 +1123,9 @@ const PROGMEM char exit_str[] = "exit";
 // executing EXIT within a do-loop, a program shall discard the loop-control
 // parameters by executing UNLOOP.
 void _exit(void) {
-  ip = (cell_t*)rPop();
+    ip = (cell_t*)rPop();
 #ifdef DEBUG
-  debugNewIP();
+    debugNewIP();
 #endif
 }
 
@@ -1131,12 +1134,12 @@ const PROGMEM char fill_str[] = "fill";
 // if u is greater than zero, store char in u consecutive characters of memory
 // beginning with c-addr.
 void _fill(void) {
-  char ch = (char)pop();
-  cell_t limit = pop();
-  char* addr = (char*)pop();
-  for(int i = 1; i < limit; i++) {
-    *addr++ = ch;
-  }
+    char ch = (char)pop();
+    cell_t limit = pop();
+    char* addr = (char*)pop();
+    for(int i = 1; i < limit; i++) {
+        *addr++ = ch;
+    }
 }
 
 const PROGMEM char find_str[] = "find";
@@ -1146,118 +1149,118 @@ const PROGMEM char find_str[] = "find";
 // execution token xt. If the definition is immediate, also return one (1), 
 // otherwise also return minus-one (-1).
 void _find(void) {
-  uint8_t index = 0;
+    uint8_t index = 0;
 
-  char* ptr = (char*)pop();
-  uint8_t length = *ptr++;
-  if (length = 0) {
-    push(-16);
-    _throw();
-    return;
-  } else if (length > STRING_SIZE) {
-    push(-18);
-    _throw();
-    return;
-  }
-   
-  pUserEntry = pLastUserEntry;
-  // First search through the user dictionary
-  while(pUserEntry) {
-    if (strcmp(pUserEntry->name, ptr) == 0) {
-      length = strlen(pUserEntry->name);
- //     w = (cell_t)pUserEntry + length + 4;
- //     // Align the address in w
- //     ALIGN(w);
- //     push(w);
-      push(pUserEntry->cfa);
-      wordFlags = pUserEntry->flags;
-//      if(pUserEntry->flags & IMMEDIATE) push(1);
-      if(wordFlags & IMMEDIATE) push(1);
-      else push(-1);
-      return;
+    char* ptr = (char*)pop();
+    uint8_t length = *ptr++;
+    if (length = 0) {
+        push(-16);
+        _throw();
+        return;
+    } else if (length > STRING_SIZE) {
+        push(-18);
+        _throw();
+        return;
     }
-    pUserEntry = (userEntry_t*)pUserEntry->prevEntry;
-  }
-  // Second Search through the flash Dictionary
-  while(pgm_read_word(&(flashDict[index].name))) {
-    if (!strcasecmp_P(ptr, (char*) pgm_read_word(&(flashDict[index].name)))) {
-      push(index + 1);
-      wordFlags = pgm_read_byte(&(flashDict[index].flags)); 
-//      if(pgm_read_byte(&(flashDict[index].flags)) & IMMEDIATE) push(1);
-      if(wordFlags & IMMEDIATE) push(1);
-      else push(-1);
-      return;                               
+
+    pUserEntry = pLastUserEntry;
+    // First search through the user dictionary
+    while(pUserEntry) {
+        if (strcmp(pUserEntry->name, ptr) == 0) {
+            length = strlen(pUserEntry->name);
+            //     w = (cell_t)pUserEntry + length + 4;
+            //     // Align the address in w
+            //     ALIGN(w);
+            //     push(w);
+            push(pUserEntry->cfa);
+            wordFlags = pUserEntry->flags;
+            //      if(pUserEntry->flags & IMMEDIATE) push(1);
+            if(wordFlags & IMMEDIATE) push(1);
+            else push(-1);
+            return;
+        }
+        pUserEntry = (userEntry_t*)pUserEntry->prevEntry;
     }
-    index++;
-  }
-  push((cell_t)ptr);
-  push(0);
+    // Second Search through the flash Dictionary
+    while(pgm_read_word(&(flashDict[index].name))) {
+        if (!strcasecmp_P(ptr, (char*) pgm_read_word(&(flashDict[index].name)))) {
+            push(index + 1);
+            wordFlags = pgm_read_byte(&(flashDict[index].flags)); 
+            //      if(pgm_read_byte(&(flashDict[index].flags)) & IMMEDIATE) push(1);
+            if(wordFlags & IMMEDIATE) push(1);
+            else push(-1);
+            return;                               
+        }
+        index++;
+    }
+    push((cell_t)ptr);
+    push(0);
 }
 
 const PROGMEM char fm_slash_mod_str[] = "fm/mod";
 // ( d1 n1 -- n2 n3 )
 // Divide d1 by n1, giving the floored quotient n3 and remainder n2.
 void _fm_slash_mod(void) {
-  cell_t n1 = pop();
-  cell_t d1 = pop();
-  push(d1 /  n1);  
-  push(d1 %  n1);  
+    cell_t n1 = pop();
+    cell_t d1 = pop();
+    push(d1 /  n1);  
+    push(d1 %  n1);  
 }
 
 const PROGMEM char here_str[] = "here";
 // ( -- addr )
 // addr is the data-space pointer.
 void _here(void) {
-  push((cell_t)pHere);
+    push((cell_t)pHere);
 }
 
 const PROGMEM char hold_str[] = "hold";
 // ( char -- )
 // add char to the beginning of the pictured numeric output string.
 void _hold(void) {
-  if (flags & NUM_PROC) {
-    *--pPNO = (char) pop();
-  }
+    if (flags & NUM_PROC) {
+        *--pPNO = (char) pop();
+    }
 }
 
 const PROGMEM char i_str[] = "i";
 // Interpretation: undefined
 // Execution: ( -- n|u ) (R: loop-sys -- loop-sys )
 void _i(void) {
-  push(rStack[rtos - 1]); 
+    push(rStack[rtos - 1]); 
 }
 
 const PROGMEM char if_str[] = "if";
 // Compilation: (C: -- orig )
 // Run-Time: ( x -- )
 void _if(void) {
-  *(cell_t*)pHere = ZJUMP_IDX;
+    *(cell_t*)pHere = ZJUMP_IDX;
 #ifdef DEBUG
-  debugXT(pHere);
+    debugXT(pHere);
 #endif
-  pHere += sizeof(cell_t);
-  *(cell_t*)pHere = 0;
-  push((cell_t)pHere);
+    pHere += sizeof(cell_t);
+    *(cell_t*)pHere = 0;
+    push((cell_t)pHere);
 #ifdef DEBUG
-  debugXT(pHere);
+    debugXT(pHere);
 #endif
-  pHere +=sizeof(cell_t);
+    pHere +=sizeof(cell_t);
 }
 
 const PROGMEM char immediate_str[] = "immediate";
 // ( -- )
 // make the most recent definition an immediate word.
 void _immediate(void) {
-  if (pLastUserEntry) {
-    pLastUserEntry->flags |= IMMEDIATE;
-  }
+    if (pLastUserEntry) {
+        pLastUserEntry->flags |= IMMEDIATE;
+    }
 }
 
 const PROGMEM char invert_str[] = "invert";
 // ( x1 -- x2 )
 // invert all bits in x1, giving its logical inverse x2
 void _invert(void)   { 
-  push(~pop());
+    push(~pop());
 }
 
 const PROGMEM char j_str[] = "j";
@@ -1267,31 +1270,31 @@ const PROGMEM char j_str[] = "j";
 // if the loop control parameters of the next-outer loop, loop-sys1, are
 // unavailable.
 void _j(void) {
-  push(rStack[rtos - 4]); 
+    push(rStack[rtos - 4]); 
 }
 
 const PROGMEM char key_str[] = "key";
 // ( -- char )
 void _key(void) {
-  push(getKey());
+    push(getKey());
 }
 
 const PROGMEM char leave_str[] = "leave";
 // Interpretation: undefined
 // Execution: ( -- ) (R: loop-sys -- )
 void _leave(void) {
-  *(cell_t*)pHere = LEAVE_SYS_IDX;
+    *(cell_t*)pHere = LEAVE_SYS_IDX;
 #ifdef DEBUG
-  debugXT(pHere);
+    debugXT(pHere);
 #endif
-  pHere +=sizeof(cell_t);
-  push((cell_t)pHere);
-  *(cell_t*)pHere = 0;
+    pHere +=sizeof(cell_t);
+    push((cell_t)pHere);
+    *(cell_t*)pHere = 0;
 #ifdef DEBUG
-  debugXT(pHere);
+    debugXT(pHere);
 #endif
-  pHere +=sizeof(cell_t);
-  _swap();
+    pHere +=sizeof(cell_t);
+    _swap();
 }
 
 const PROGMEM char literal_str[] = "literal";
@@ -1300,20 +1303,20 @@ const PROGMEM char literal_str[] = "literal";
 // Run-Time: ( -- x )
 // Place x on the stack
 void _literal(void) {
-  if (state) {
-    *(cell_t*)pHere = (cell_t)LITERAL_IDX;
+    if (state) {
+        *(cell_t*)pHere = (cell_t)LITERAL_IDX;
 #ifdef DEBUG
-    debugXT((cell_t*)pHere);
+        debugXT((cell_t*)pHere);
 #endif
-    pHere += sizeof(cell_t);
-    *(cell_t*)pHere = pop();
+        pHere += sizeof(cell_t);
+        *(cell_t*)pHere = pop();
 #ifdef DEBUG
-    debugXT(pHere);
+        debugXT(pHere);
 #endif
-    pHere += sizeof(cell_t);
-  } else {
-    push(*ip++);
-  } 
+        pHere += sizeof(cell_t);
+    } else {
+        push(*ip++);
+    } 
 }
 
 const PROGMEM char loop_str[] = "loop";
@@ -1321,71 +1324,71 @@ const PROGMEM char loop_str[] = "loop";
 // Compilation: (C: do-sys -- )
 // Run-Time: ( -- ) (R: loop-sys1 -- loop-sys2 )
 void _loop(void) {
-  *(cell_t*)pHere = LOOP_SYS_IDX;
+    *(cell_t*)pHere = LOOP_SYS_IDX;
 #ifdef DEBUG
-  debugXT(pHere);
+    debugXT(pHere);
 #endif
-  pHere += sizeof(cell_t);
-  *(cell_t*)pHere = pop();
+    pHere += sizeof(cell_t);
+    *(cell_t*)pHere = pop();
 #ifdef DEBUG
-  debugXT(pHere);
+    debugXT(pHere);
 #endif
-  pHere += sizeof(cell_t);
-  cell_t* leave = (cell_t*)pop();
-  if (leave != (cell_t*)DO_SYS) {
-    if (stack[tos] == DO_SYS) {
-      *leave = (ucell_t)pHere;
-      pop();
-    } else {
-      push(-22);
-      _throw();
-      return;
+    pHere += sizeof(cell_t);
+    cell_t* leave = (cell_t*)pop();
+    if (leave != (cell_t*)DO_SYS) {
+        if (stack[tos] == DO_SYS) {
+            *leave = (ucell_t)pHere;
+            pop();
+        } else {
+            push(-22);
+            _throw();
+            return;
+        }
     }
-  }
 }
 
 const PROGMEM char lshift_str[] = "lshift";
 // ( x1 u -- x2 )
 // x2 is x1 shifted to left by u positions.
 void _lshift(void) {
-  cell_t u = pop();
-  cell_t x1 = pop();
-  push(x1 << u);
+    cell_t u = pop();
+    cell_t x1 = pop();
+    push(x1 << u);
 }
 
 const PROGMEM char m_star_str[] = "m*";
 // ( n1 n2 -- d )
 // d is the signed product of n1 times n2.
 void _m_star(void) {
-  push(pop() * pop());
+    push(pop() * pop());
 }
 
 const PROGMEM char max_str[] = "max";
 // ( n1 n2 -- n3 )
 // n3 is the greater of of n1 or n2.
 void _max(void) {
-  cell_t n2 = pop();
-  cell_t n1 = pop();
-  if (n1 > n2) push(n1);
-  else push(n2);
+    cell_t n2 = pop();
+    cell_t n1 = pop();
+    if (n1 > n2) push(n1);
+    else push(n2);
 }
 
 const PROGMEM char min_str[] = "min";
 // ( n1 n2 -- n3 )
 // n3 is the lesser of of n1 or n2.
 void _min(void) {
-  cell_t n2 = pop();
-  cell_t n1 = pop();
-  if (n1 > n2) push(n2);
-  else push(n1);
+    cell_t n2 = pop();
+    cell_t n1 = pop();
+    if (n1 > n2) push(n2);
+    else push(n1);
 }
 
 const PROGMEM char mod_str[] = "mod";
 // ( n1 n2 -- n3 )
 // Divide n1 by n2 giving the remainder n3.
 void _mod(void) {
-  cell_t temp = pop();
-  push(pop() %  temp);
+    cell_t temp = pop();
+    push(pop() %  temp);
 }
 
 const PROGMEM char move_str[] = "move";
@@ -1393,26 +1396,26 @@ const PROGMEM char move_str[] = "move";
 // if u is greater than zero, copy the contents of u consecutive address 
 // starting at addr1 to u consecutive address starting at addr2.
 void _move(void) {
-  cell_t u = pop();
-  addr_t *to = (addr_t*)pop();
-  addr_t *from = (addr_t*)pop();
-  for (cell_t i = 0; i < u; i++) {
-    *to++ = *from++;
-  }
+    cell_t u = pop();
+    addr_t *to = (addr_t*)pop();
+    addr_t *from = (addr_t*)pop();
+    for (cell_t i = 0; i < u; i++) {
+        *to++ = *from++;
+    }
 }
 
 const PROGMEM char negate_str[] = "negate";
 // ( n1 -- n2 )
 // Negate n1, giving its arithmetic inverse n2.
 void _negate(void) { 
-  push(!pop());
+    push(!pop());
 }
 
 const PROGMEM char or_str[] = "or";
 // ( x1 x2 -- x3 )
 // x3 is the bit by bit logical or of x1 with x2
 void _or(void) { 
-  push(pop() |  pop());
+    push(pop() |  pop());
 }
 
 const PROGMEM char over_str[] = "over";
@@ -1427,34 +1430,34 @@ const PROGMEM char postpone_str[] = "postpone";
 // Append the compilation semantics of name to the current definition. An 
 // ambiguous condition exists if name is not found.
 void _postpone(void) { 
-  func function;
-  if(!getToken()) {
-    push(-16);
-    _throw();
-  }
-  if(isWord(cTokenBuffer)) {
-    if(wordFlags & COMP_ONLY) {
-      if (w > 255) {
-        rPush(0);            // Push 0 as our return address
-        ip = (cell_t *)w;          // set the ip to the XT (memory location)
-        executeWord();
-      } else {
-        function = (func) pgm_read_word(&(flashDict[w - 1].function));
-        function();
-        if (errorCode) return;
-      }
-    } else {
-      *(cell_t*)pHere = (cell_t)w;
-#ifdef DEBUG
-      debugXT(pHere);
-#endif
-      pHere += sizeof(cell_t);
+    func function;
+    if(!getToken()) {
+        push(-16);
+        _throw();
     }
-  } else {
-    push(-13);
-    _throw();
-    return;
-  }
+    if(isWord(cTokenBuffer)) {
+        if(wordFlags & COMP_ONLY) {
+            if (w > 255) {
+                rPush(0);            // Push 0 as our return address
+                ip = (cell_t *)w;          // set the ip to the XT (memory location)
+                executeWord();
+            } else {
+                function = (func) pgm_read_word(&(flashDict[w - 1].function));
+                function();
+                if (errorCode) return;
+            }
+        } else {
+            *(cell_t*)pHere = (cell_t)w;
+#ifdef DEBUG
+            debugXT(pHere);
+#endif
+            pHere += sizeof(cell_t);
+        }
+    } else {
+        push(-13);
+        _throw();
+        return;
+    }
 }
 
 const PROGMEM char quit_str[] = "quit";
@@ -1462,9 +1465,9 @@ const PROGMEM char quit_str[] = "quit";
 // Empty the return stack, store zero in SOURCE-ID if it is present,
 // make the user input device the input source, enter interpretation state.
 void _quit(void) { 
-  rtos = -1;
-  *cpToIn = 0;          // Terminate buffer to stop interpreting
-  Serial.flush();
+    rtos = -1;
+    *cpToIn = 0;          // Terminate buffer to stop interpreting
+    Serial.flush();
 }
 
 const PROGMEM char r_from_str[] = "r>";
@@ -1473,13 +1476,13 @@ const PROGMEM char r_from_str[] = "r>";
 // move x from the return stack to the data stack.
 void _r_from(void) {
 #ifdef DEBUG
-  ucell_t temp = rPop();
-  serial_print_P(PSTR("  Moving $"));
-  Serial.print(temp, HEX);
-  serial_print_P(PSTR(" To Data Stack\r\n"));
-  push(temp);
+    ucell_t temp = rPop();
+    serial_print_P(PSTR("  Moving $"));
+    Serial.print(temp, HEX);
+    serial_print_P(PSTR(" To Data Stack\r\n"));
+    push(temp);
 #else
-  push(rPop());
+    push(rPop());
 #endif
 }
 
@@ -1488,7 +1491,7 @@ const PROGMEM char r_fetch_str[] = "r@";
 // Execution: ( -- x ) (R: x -- x)
 // Copy x from the return stack to the data stack.
 void _r_fetch(void) { 
-  push(rStack[rtos]);
+    push(rStack[rtos]);
 }
 
 const PROGMEM char recurse_str[] = "recurse";
@@ -1498,11 +1501,11 @@ const PROGMEM char recurse_str[] = "recurse";
 // definition. An ambiguous condition exists if RECURSE appends in a definition 
 // after DOES>.
 void _recurse(void) { 
-  *(cell_t*)pHere = (cell_t)pCodeStart;
+    *(cell_t*)pHere = (cell_t)pCodeStart;
 #ifdef DEBUG
-  debugXT(pHere);
+    debugXT(pHere);
 #endif
-  pHere += sizeof(cell_t);
+    pHere += sizeof(cell_t);
 }
 
 const PROGMEM char repeat_str[] = "repeat";
@@ -1511,43 +1514,43 @@ const PROGMEM char repeat_str[] = "repeat";
 // Run-Time ( -- )
 // Continue execution at the location given.
 void _repeat(void) { 
-  cell_t dest;
-  cell_t* orig;
-  *(cell_t*)pHere = JUMP_IDX;
+    cell_t dest;
+    cell_t* orig;
+    *(cell_t*)pHere = JUMP_IDX;
 #ifdef DEBUG
-  debugXT(pHere);
+    debugXT(pHere);
 #endif
-  pHere += sizeof(cell_t);
-  *(cell_t*)pHere = pop() - (cell_t)pHere;
+    pHere += sizeof(cell_t);
+    *(cell_t*)pHere = pop() - (cell_t)pHere;
 #ifdef DEBUG
-  debugXT(pHere);
+    debugXT(pHere);
 #endif
-  pHere += sizeof(cell_t);
-  orig = (cell_t*)pop();
-  *orig = (cell_t)pHere - (cell_t)orig;
+    pHere += sizeof(cell_t);
+    orig = (cell_t*)pop();
+    *orig = (cell_t)pHere - (cell_t)orig;
 #ifdef DEBUG
-  debugValue(orig);
+    debugValue(orig);
 #endif
 }
 
 const PROGMEM char rot_str[] = "rot";
 // ( x1 x2 x3 -- x2 x3 x1)
 void _rot(void) { 
-  cell_t x3 = pop();
-  cell_t x2 = pop();
-  cell_t x1 = pop();
-  push(x2);
-  push(x3);
-  push(x1);
+    cell_t x3 = pop();
+    cell_t x2 = pop();
+    cell_t x1 = pop();
+    push(x2);
+    push(x3);
+    push(x1);
 }
 
 const PROGMEM char rshift_str[] = "rshift";
 // ( x1 u -- x2 )
 // x2 is x1 shifted to right by u positions.
 void _rshift(void) {
-  cell_t u = pop();
-  cell_t x1 = pop();
-  push(x1 >> u);
+    cell_t u = pop();
+    cell_t x1 = pop();
+    push(x1 >> u);
 }
 
 const PROGMEM char s_quote_str[] = "s\x22"; 
@@ -1559,112 +1562,112 @@ const PROGMEM char s_quote_str[] = "s\x22";
 // Return c-addr and u describing a string consisting of the characters ccc. A program
 // shall not alter the returned string.
 void _s_quote(void) {
-  uint8_t i;
-  char length;
-  if (flags & EXECUTE) {
-    push((cell_t)ip);
-    cell_t len = strlen((char*)ip);
-    push(len++);    // increment for the null terminator
-    ALIGN(len);
-    ip = (cell_t*)((cell_t)ip + len);
-  }
-  else if (state) {
-    cDelimiter = '"';
-    if(!getToken()) {
-      push(-16);
-      _throw();
+    uint8_t i;
+    char length;
+    if (flags & EXECUTE) {
+        push((cell_t)ip);
+        cell_t len = strlen((char*)ip);
+        push(len++);    // increment for the null terminator
+        ALIGN(len);
+        ip = (cell_t*)((cell_t)ip + len);
     }
-    length = strlen(cTokenBuffer);
-    *(cell_t*)pHere = (cell_t)S_QUOTE_IDX;
-  #ifdef DEBUG
-    debugXT(pHere);
-  #endif
-    pHere += sizeof(cell_t);
+    else if (state) {
+        cDelimiter = '"';
+        if(!getToken()) {
+            push(-16);
+            _throw();
+        }
+        length = strlen(cTokenBuffer);
+        *(cell_t*)pHere = (cell_t)S_QUOTE_IDX;
 #ifdef DEBUG
-    serial_print_P(PSTR("\r\n  String @ $"));
-    char* str = (char*)pHere;
-    Serial.print((ucell_t)str, HEX);
+        debugXT(pHere);
 #endif
-    for (uint8_t i = 0; i < length; i++) {
-      *(char*)pHere++ = cTokenBuffer[i];
+        pHere += sizeof(cell_t);
+#ifdef DEBUG
+        serial_print_P(PSTR("\r\n  String @ $"));
+        char* str = (char*)pHere;
+        Serial.print((ucell_t)str, HEX);
+#endif
+        for (uint8_t i = 0; i < length; i++) {
+            *(char*)pHere++ = cTokenBuffer[i];
+        }
+        *(char*)pHere++ = NULL;    // Terminate String
+#ifdef DEBUG
+        serial_print_P(PSTR(": "));
+        Serial.print(str);
+#endif
+        ALIGN_P(pHere);  // re- align the pHere for any new code
+        cDelimiter = ' ';
     }
-    *(char*)pHere++ = NULL;    // Terminate String
-#ifdef DEBUG
-    serial_print_P(PSTR(": "));
-    Serial.print(str);
-#endif
-    ALIGN_P(pHere);  // re- align the pHere for any new code
-    cDelimiter = ' ';
-  }
 }
 
 const PROGMEM char s_to_d_str[] = "s>d";
 // ( n -- d )
 void _s_to_d(void) {
-  cell_t n = pop();
-  push(0);
-  push(n);
+    cell_t n = pop();
+    push(0);
+    push(n);
 }
 
 const PROGMEM char sign_str[] = "sign";
 // ( n -- )
 void _sign(void) {
-  if (flags & NUM_PROC) {
-    cell_t sign = pop();
-    if (sign < 0) *--pPNO = '-';
-  }
+    if (flags & NUM_PROC) {
+        cell_t sign = pop();
+        if (sign < 0) *--pPNO = '-';
+    }
 }
 
 const PROGMEM char sm_slash_rem_str[] = "sm/rem";
 // ( d1 n1 -- n2 n3 )
 // Divide d1 by n1, giving the symmetric quotient n3 and remainder n2.
 void _sm_slash_rem(void) {
-  cell_t n1 = pop();
-  cell_t d1 = pop();
-  push(d1 /  n1);  
-  push(d1 %  n1);  
+    cell_t n1 = pop();
+    cell_t d1 = pop();
+    push(d1 /  n1);  
+    push(d1 %  n1);  
 }
 
 const PROGMEM char source_str[] = "source";
 // ( -- c-addr u )
 // c-addr is the address of, and u is the number of characters in, the input buffer.
 void _source(void) {
-  push((cell_t)&cInputBuffer);
-  push(strlen(cInputBuffer));
+    push((cell_t)&cInputBuffer);
+    push(strlen(cInputBuffer));
 }
 
 const PROGMEM char space_str[] = "space";
 // ( -- )
 // Display one space
 void _space(void) {
-  serial_print_P(sp_str);
+    serial_print_P(sp_str);
 }
 
 const PROGMEM char spaces_str[] = "spaces";
 // ( n -- )
 // if n is greater than zero, display n space
 void _spaces(void) {
-  char n = (char) pop();
-  while (n > 0) {
-    serial_print_P(sp_str);
-  }
+    char n = (char) pop();
+    while (n > 0) {
+        serial_print_P(sp_str);
+    }
 }
 
 const PROGMEM char state_str[] = "state";
 // ( -- a-addr )
 // a-addr is the address of the cell containing compilation state flag.
 void _state(void) {
-  push((cell_t)&state);
+    push((cell_t)&state);
 }
 
 const PROGMEM char swap_str[] = "swap";
 void _swap(void) { // x y -- y x
-  cell_t x, y;
-  
-  y = pop();
-  x = pop();
-  push(y);
-  push(x);
+    cell_t x, y;
+
+    y = pop();
+    x = pop();
+    push(y);
+    push(x);
 }
 
 const PROGMEM char then_str[] = "then";
@@ -1672,10 +1675,10 @@ const PROGMEM char then_str[] = "then";
 // Compilation: (C: orig -- )
 // Run-Time: ( -- )
 void _then(void) {
-  cell_t* orig = (cell_t*)pop();
-  *orig = (cell_t)pHere - (cell_t)orig;
+    cell_t* orig = (cell_t*)pop();
+    *orig = (cell_t)pHere - (cell_t)orig;
 #ifdef DEBUG
-  debugValue(orig);
+    debugValue(orig);
 #endif
 }
 
@@ -1683,64 +1686,64 @@ const PROGMEM char type_str[] = "type";
 // ( c-addr u -- )
 // if u is greater than zero display character string specified by c-addr and u
 void _type(void) {
-  uint8_t length = (uint8_t)pop();
-  char* addr = (char*)pop();
+    uint8_t length = (uint8_t)pop();
+    char* addr = (char*)pop();
 #ifdef DEBUG
-  _cr();
+    _cr();
 #endif
-  for (char i = 0; i < length; i++) 
-    Serial.print(*addr++);
+    for (char i = 0; i < length; i++) 
+        Serial.print(*addr++);
 }
 
 const PROGMEM char u_dot_str[] = "u.";
 // ( u -- )
 // Displau u in free field format
 void _u_dot(void) {
-  Serial.print((ucell_t) pop());
+    Serial.print((ucell_t) pop());
 }
 
 const PROGMEM char u_lt_str[] = "u<";
 // ( u1 u2 -- flag )
 // flag is true if and only if u1 is less than u2.
 void _u_lt(void) {
-  if ((ucell_t)pop() > ucell_t(pop())) push(TRUE);
-  else push(FALSE);
+    if ((ucell_t)pop() > ucell_t(pop())) push(TRUE);
+    else push(FALSE);
 }
 
 const PROGMEM char um_star_str[] = "um*";
 // ( u1 u2 -- ud )
 // multiply u1 by u2, giving the unsigned double-cell product ud
 void _um_star(void) {
-  udcell_t ud = pop() * pop();
-  cell_t lsb = (ucell_t)ud;
-  cell_t msb = (ucell_t)(ud >> sizeof(ucell_t)*8);
-  push(msb);
-  push(lsb);
+    udcell_t ud = pop() * pop();
+    cell_t lsb = (ucell_t)ud;
+    cell_t msb = (ucell_t)(ud >> sizeof(ucell_t)*8);
+    push(msb);
+    push(lsb);
 }
 
 const PROGMEM char um_slash_mod_str[] = "um/mod";
 // ( ud u1 -- u2 u3 )
 // Divide ud by u1 giving quotient u3 and remainder u2.
 void _um_slash_mod(void) {
-  ucell_t u1 = pop();
-  udcell_t lsb = pop();
-  udcell_t msb = pop();
-  udcell_t ud = (msb << 16) + (lsb);
-  push(ud % u1);
-  push(ud / u1);
+    ucell_t u1 = pop();
+    udcell_t lsb = pop();
+    udcell_t msb = pop();
+    udcell_t ud = (msb << 16) + (lsb);
+    push(ud % u1);
+    push(ud / u1);
 }
 
 const PROGMEM char unloop_str[] = "unloop";
 // Interpretation: Undefine
 // Execution: ( -- )(R: loop-sys -- )
 void _unloop(void) {
-  serial_print_P(not_done_str); 
-  rPop();
-  rPop();
-  if (rPop() != LOOP_SYS) {
-    push(-22);
-    _throw();
-  }
+    serial_print_P(not_done_str); 
+    rPop();
+    rPop();
+    if (rPop() != LOOP_SYS) {
+        push(-22);
+        _throw();
+    }
 }
 
 const PROGMEM char until_str[] = "until";
@@ -1748,16 +1751,16 @@ const PROGMEM char until_str[] = "until";
 // Compilation: (C: dest -- )
 // Run-Time: ( x -- )
 void _until(void) {
-  *(cell_t*)pHere = ZJUMP_IDX;
+    *(cell_t*)pHere = ZJUMP_IDX;
 #ifdef DEBUG
-  debugXT(pHere);
+    debugXT(pHere);
 #endif
-  pHere += sizeof(cell_t);
-  *(cell_t*)pHere = pop() - (cell_t)pHere;
+    pHere += sizeof(cell_t);
+    *(cell_t*)pHere = pop() - (cell_t)pHere;
 #ifdef DEBUG
-  debugValue(pHere);
+    debugValue(pHere);
 #endif
-  pHere += sizeof(cell_t);
+    pHere += sizeof(cell_t);
 }
 
 const PROGMEM char variable_str[] = "variable";
@@ -1769,22 +1772,22 @@ const PROGMEM char variable_str[] = "variable";
 // a-addr is the address of the reserved cell. A program is responsible for
 // initializing the contents of a reserved cell.
 void _variable(void) {
-  if (flags & EXECUTE) {
-    push((cell_t)ip++);    
-  } else {
-    openEntry();
-    *(cell_t*)pHere = (cell_t)VARIABLE_IDX;
+    if (flags & EXECUTE) {
+        push((cell_t)ip++);    
+    } else {
+        openEntry();
+        *(cell_t*)pHere = (cell_t)VARIABLE_IDX;
 #ifdef DEBUG
-    debugXT(pHere);
+        debugXT(pHere);
 #endif
-    pHere += sizeof(cell_t);
-    *(cell_t*)pHere = 0;
+        pHere += sizeof(cell_t);
+        *(cell_t*)pHere = 0;
 #ifdef DEBUG
-    debugXT(pHere);
+        debugXT(pHere);
 #endif
-    pHere += sizeof(cell_t);
-    closeEntry();
-  }
+        pHere += sizeof(cell_t);
+        closeEntry();
+    }
 }
 
 const PROGMEM char while_str[] = "while";
@@ -1792,22 +1795,22 @@ const PROGMEM char while_str[] = "while";
 // Compilation: (C: dest -- orig dest )
 // Run-Time: ( x -- )
 void _while(void) {
-  ucell_t dest;
-  ucell_t orig;
-  dest = pop();
-  *(cell_t*)pHere = ZJUMP_IDX;
+    ucell_t dest;
+    ucell_t orig;
+    dest = pop();
+    *(cell_t*)pHere = ZJUMP_IDX;
 #ifdef DEBUG
-  debugXT(pHere);
+    debugXT(pHere);
 #endif
-  pHere += sizeof(cell_t);
-  orig = (cell_t)pHere;
-  *(cell_t*)pHere = 0;
+    pHere += sizeof(cell_t);
+    orig = (cell_t)pHere;
+    *(cell_t*)pHere = 0;
 #ifdef DEBUG
-  debugXT(pHere);
+    debugXT(pHere);
 #endif
-  pHere += sizeof(cell_t);
-  push(orig);
-  push(dest);
+    pHere += sizeof(cell_t);
+    push(orig);
+    push(dest);
 }
 
 const PROGMEM char word_str[] = "word";
@@ -1826,30 +1829,30 @@ const PROGMEM char word_str[] = "word";
 // included as a concession to existing programs that use CONVERT. A program shall 
 // not depend on the existence of the space.
 void _word(void) {
-  uint8_t* start;
-//  char* cPtr = &cTokenBuffer[1];
-  cDelimiter = (char)pop();
-  start = pHere++;
-  while(cpToIn <= cpSourceEnd) {
-    if (*cpToIn == cDelimiter || *cpToIn == 0) {
-      *start = (pHere - start) - 1;       // write the length byte
-//      cTokenBuffer[0] = (cPtr - cTokenBuffer) - 1;       // write the length byte
-      pHere = start;                      // reset pHere (transient memory)
-      push((cell_t)start);                // push the c-addr onto the stack
-//      push((cell_t)cPtr);                   // push the c-addr onto the stack
-      cpToIn++;
-      break;      
-    } else *pHere++ = *cpToIn++;
-//    } else *cPtr++ = *cpToIn++;
-  }
-  cDelimiter = ' ';
+    uint8_t* start;
+    //  char* cPtr = &cTokenBuffer[1];
+    cDelimiter = (char)pop();
+    start = pHere++;
+    while(cpToIn <= cpSourceEnd) {
+        if (*cpToIn == cDelimiter || *cpToIn == 0) {
+            *start = (pHere - start) - 1;       // write the length byte
+            //      cTokenBuffer[0] = (cPtr - cTokenBuffer) - 1;       // write the length byte
+            pHere = start;                      // reset pHere (transient memory)
+            push((cell_t)start);                // push the c-addr onto the stack
+            //      push((cell_t)cPtr);                   // push the c-addr onto the stack
+            cpToIn++;
+            break;      
+        } else *pHere++ = *cpToIn++;
+        //    } else *cPtr++ = *cpToIn++;
+}
+cDelimiter = ' ';
 }
 
 const PROGMEM char xor_str[] = "xor";
 // ( x1 x2 -- x3 )
 // x3 is the bit by bit exclusive or of x1 with x2
 void _xor(void) { 
-  push(pop() ^  pop());
+    push(pop() ^  pop());
 }
 
 const PROGMEM char left_bracket_str[] = "[";
@@ -1858,7 +1861,7 @@ const PROGMEM char left_bracket_str[] = "[";
 // Execution: ( -- )
 // Enter interpretation state. [ is an immediate word.
 void _left_bracket(void) {
-  state = FALSE;
+    state = FALSE;
 }
 
 const PROGMEM char bracket_tick_str[] = "[']";
@@ -1872,20 +1875,20 @@ const PROGMEM char bracket_tick_str[] = "[']";
 // by the compiled phrase "['] X" is the same value returned by "' X" outside
 // of compilation state.
 void _bracket_tick(void) {
-  if(!getToken()) {
-    push(-16);
-    _throw();
-  }
-  if(isWord(cTokenBuffer)) {
-    *(cell_t*)pHere = LITERAL_IDX;
-    pHere += sizeof(cell_t);
-    *(cell_t*)pHere = w;
-    pHere += sizeof(cell_t);
-  } else {
-    push(-13);
-    _throw();
-    return;
-  }
+    if(!getToken()) {
+        push(-16);
+        _throw();
+    }
+    if(isWord(cTokenBuffer)) {
+        *(cell_t*)pHere = LITERAL_IDX;
+        pHere += sizeof(cell_t);
+        *(cell_t*)pHere = w;
+        pHere += sizeof(cell_t);
+    } else {
+        push(-13);
+        _throw();
+        return;
+    }
 }
 
 const PROGMEM char bracket_char_str[] = "[char]";
@@ -1896,22 +1899,22 @@ const PROGMEM char bracket_char_str[] = "[char]";
 // Run-Time: ( -- char )
 // Place char, the value of the first character of name, on the stack.
 void _bracket_char(void) {
-  if(getToken()) {
-    *(cell_t*)pHere = LITERAL_IDX;
-    pHere += sizeof(cell_t);
-    *(cell_t*)pHere = cTokenBuffer[0];
-    pHere += sizeof(cell_t);
-  } else {
-    push(-16);
-    _throw();
-  }
+    if(getToken()) {
+        *(cell_t*)pHere = LITERAL_IDX;
+        pHere += sizeof(cell_t);
+        *(cell_t*)pHere = cTokenBuffer[0];
+        pHere += sizeof(cell_t);
+    } else {
+        push(-16);
+        _throw();
+    }
 }
 
 const PROGMEM char right_bracket_str[] = "]";
 // ( -- )
 // Enter compilation state.
 void _right_bracket(void) {
-  state = TRUE;
+    state = TRUE;
 }
 
 /*******************************************************************************/
@@ -1920,13 +1923,13 @@ void _right_bracket(void) {
 #ifdef CORE_EXT_SET
 const PROGMEM char neq_str[] = "<>";
 void _neq(void) { 
-  push(pop() != pop()); 
+    push(pop() != pop()); 
 }
 const PROGMEM char hex_str[] = "hex";
 // ( -- )
 // Set BASE to 16
 void _hex(void) { // value --
-  base = 16;
+    base = 16;
 }
 #endif
 
@@ -1946,25 +1949,25 @@ const PROGMEM char throw_str[] = "throw";
 // exception stack, along with everything on the return stack above that frame.
 // ...
 void _throw(void) {
-  errorCode = pop();
-  uint8_t index = 0;
-  int8_t tableCode;
-  _cr();
-  Serial.print(cTokenBuffer);
-  serial_print_P(PSTR(" EXCEPTION("));
-  do{
-    tableCode = pgm_read_byte(&(exception[index].code));
-    if (errorCode == tableCode) {
-      Serial.print((int)errorCode);
-      serial_print_P(PSTR("): "));
-      serial_print_P((char*) pgm_read_word(&exception[index].name));
-      _cr();
-    }
-    index++;
-  } while(tableCode);
-  tos = -1;                       // Clear the stack.
-  _quit();
-  state = FALSE;
+    errorCode = pop();
+    uint8_t index = 0;
+    int8_t tableCode;
+    _cr();
+    Serial.print(cTokenBuffer);
+    serial_print_P(PSTR(" EXCEPTION("));
+    do{
+        tableCode = pgm_read_byte(&(exception[index].code));
+        if (errorCode == tableCode) {
+            Serial.print((int)errorCode);
+            serial_print_P(PSTR("): "));
+            serial_print_P((char*) pgm_read_word(&exception[index].name));
+            _cr();
+        }
+        index++;
+    } while(tableCode);
+    tos = -1;                       // Clear the stack.
+    _quit();
+    state = FALSE;
 }  
 #endif
 
@@ -1984,16 +1987,76 @@ void _throw(void) {
 /**                          Programming Tools Set                            **/
 /*******************************************************************************/
 #ifdef TOOLS_SET
+// { eeload_str,       _eeLoad,        NORMAL },
+
+#define SOH 0x01
+#define EOT 0x04
+#define ACK 0x06
+#define NAK 0x15
+#define CAN 0x18
+
+const PROGMEM char eeload_str[] = "eeLoad";
+void _eeLoad(void) {
+    uint8_t incoming[132];
+    uint8_t idx=0;
+    uint8_t exitFlag=0;
+    uint8_t inByte;
+    uint8_t lastByte=0;
+    uint8_t rc;
+    uint8_t blkCounter=0;
+    uint16_t eepromIdx=0;
+
+    uint8_t seq;
+    uint8_t iseq;
+
+    uint8_t cksum;
+    long now;
+
+    mySerial.begin(9600);
+    mySerial.println("Debug Ready");
+
+    Serial.setTimeout(10000);
+
+    Serial.print(">> ");
+    while (exitFlag == 0) {
+        while(!Serial.available()) {
+        }
+        inByte = Serial.read();
+
+        if( lastByte == '\r' && inByte == '\n' ) { // Empty line.
+            Serial.write('\r');
+            Serial.print(">> ");
+        }
+        if( inByte == 0x1a) {
+            mySerial.println("0x1a EOF Received");
+            exitFlag = 1;
+        } else {
+            lastByte = inByte;
+            Serial.write(inByte);
+            mySerial.write(inByte);
+            EEPROM.write( eepromIdx++, inByte);
+
+            delay(10);
+
+            if( inByte == 0x0a ) {
+                Serial.print(">> ");
+                mySerial.write(0x0d);
+            }
+        }
+    }
+
+}
+
 const PROGMEM char dot_s_str[] = ".s";
 void _dot_s(void) {
-  char i;
-  char depth = tos + 1;
-  if (tos >= 0) {
-    for (i = 0; i < depth ; i++) {
-      w = stack[i];
-      displayValue();
+    char i;
+    char depth = tos + 1;
+    if (tos >= 0) {
+        for (i = 0; i < depth ; i++) {
+            w = stack[i];
+            displayValue();
+        }
     }
-  }
 }
 
 const PROGMEM char dump_str[] = "dump";
@@ -2003,34 +2066,34 @@ const PROGMEM char dump_str[] = "dump";
 // DUMP may be implemented using pictured numeric output words. Consequently, 
 // its use may corrupt the transient region identified by #>.
 void _dump(void) { 
-  uint8_t len = (uint8_t)pop();
-  addr_t addr_start = (addr_t)pop();
-  addr_t addr_end = addr_start;
-  addr_end += len;
-  addr_start = addr_start & 0xFFF0;
-  
-  volatile uint8_t* addr = (uint8_t*)addr_start;
-  
-  while (addr < (uint8_t*)addr_end) {
-    serial_print_P(PSTR("\r\n$"));
-    if (addr < (uint8_t*)0x10) serial_print_P(zero_str);
-    if (addr < (uint8_t*)0x100) serial_print_P(zero_str);
-    Serial.print((uint16_t)addr, HEX);
-    serial_print_P(sp_str);
-    for (uint8_t i = 0; i < 16; i++) {
-      if (*addr < 0x10) serial_print_P(zero_str);
-      Serial.print(*addr++, HEX);
-      serial_print_P(sp_str);
+    uint8_t len = (uint8_t)pop();
+    addr_t addr_start = (addr_t)pop();
+    addr_t addr_end = addr_start;
+    addr_end += len;
+    addr_start = addr_start & 0xFFF0;
+
+    volatile uint8_t* addr = (uint8_t*)addr_start;
+
+    while (addr < (uint8_t*)addr_end) {
+        serial_print_P(PSTR("\r\n$"));
+        if (addr < (uint8_t*)0x10) serial_print_P(zero_str);
+        if (addr < (uint8_t*)0x100) serial_print_P(zero_str);
+        Serial.print((uint16_t)addr, HEX);
+        serial_print_P(sp_str);
+        for (uint8_t i = 0; i < 16; i++) {
+            if (*addr < 0x10) serial_print_P(zero_str);
+            Serial.print(*addr++, HEX);
+            serial_print_P(sp_str);
+        }
+        serial_print_P(tab_str);
+        addr -= 16;
+        for (uint8_t i = 0; i < 16; i++) {
+            if (*addr < 127 && *addr > 31) 
+                Serial.print((char)*addr);
+            else serial_print_P(PSTR("."));
+            addr++;  
+        }
     }
-    serial_print_P(tab_str);
-    addr -= 16;
-    for (uint8_t i = 0; i < 16; i++) {
-      if (*addr < 127 && *addr > 31) 
-      Serial.print((char)*addr);
-      else serial_print_P(PSTR("."));
-      addr++;  
-    }
-  }
 }
 
 const PROGMEM char see_str[] = "see";
@@ -2039,83 +2102,83 @@ const PROGMEM char see_str[] = "see";
 // source of the representation (object-code decompilation, source block, etc.)
 // and the particular form of the display in implementation defined.
 void _see(void) { 
-  _tick();
-  char flags = wordFlags;
-  if (flags && IMMEDIATE) 
-    serial_print_P(PSTR("\r\nImmediate Word"));
-  cell_t xt = pop();
-  if (xt < 255) {
-    serial_print_P(PSTR("\r\nWord is a primitive"));
-  } else {
-    cell_t* addr = (cell_t*)xt;
-    serial_print_P(PSTR("\r\nCode Field Address: "));
-    Serial.print((addr_t)addr);
-    serial_print_P(PSTR("\r\nAddr\tXT\tName"));
-    do {
-      serial_print_P(PSTR("\r\n$"));
-      Serial.print((cell_t)addr, HEX);
-      serial_print_P(tab_str);
-      Serial.print(*addr);
-      serial_print_P(tab_str);
-      xtToName(*addr);
-      switch (*addr) {
-        case 2:
-        case 4:
-        case 5:
-          serial_print_P(PSTR("("));
-          Serial.print(*++addr);
-          serial_print_P(PSTR(")"));
-          break;
-        case 13:
-        case 14:
-          serial_print_P(sp_str);
-          char *ptr = (char*)++addr;
-          do {
-            Serial.print(*ptr++);
-          } while (*ptr != 0);
-          serial_print_P(PSTR("\x22"));
-          addr = (cell_t*)++ptr;
-          addr = (cell_t*)(((cell_t)addr - 1) & -2);
-          break;
-      }
-    } while (*addr++ != 1);
-  }  
+    _tick();
+    char flags = wordFlags;
+    if (flags && IMMEDIATE) 
+        serial_print_P(PSTR("\r\nImmediate Word"));
+    cell_t xt = pop();
+    if (xt < 255) {
+        serial_print_P(PSTR("\r\nWord is a primitive"));
+    } else {
+        cell_t* addr = (cell_t*)xt;
+        serial_print_P(PSTR("\r\nCode Field Address: "));
+        Serial.print((addr_t)addr);
+        serial_print_P(PSTR("\r\nAddr\tXT\tName"));
+        do {
+            serial_print_P(PSTR("\r\n$"));
+            Serial.print((cell_t)addr, HEX);
+            serial_print_P(tab_str);
+            Serial.print(*addr);
+            serial_print_P(tab_str);
+            xtToName(*addr);
+            switch (*addr) {
+                case 2:
+                case 4:
+                case 5:
+                    serial_print_P(PSTR("("));
+                    Serial.print(*++addr);
+                    serial_print_P(PSTR(")"));
+                    break;
+                case 13:
+                case 14:
+                    serial_print_P(sp_str);
+                    char *ptr = (char*)++addr;
+                    do {
+                        Serial.print(*ptr++);
+                    } while (*ptr != 0);
+                    serial_print_P(PSTR("\x22"));
+                    addr = (cell_t*)++ptr;
+                    addr = (cell_t*)(((cell_t)addr - 1) & -2);
+                    break;
+            }
+        } while (*addr++ != 1);
+    }  
 }
 
 const PROGMEM char words_str[] = "words";
 void _words(void) { // --
-  uint8_t count = 0;
-  uint8_t index = 0;
-  uint8_t length = 0;
-  char* pChar;
-  
-  while (pgm_read_word(&(flashDict[index].name))) {
-      if (count > 70) {
-          Serial.println();
-          count = 0;
-      }
-      if (!(pgm_read_word(&(flashDict[index].flags)) & SMUDGE)) {
-        count += serial_print_P((char*) pgm_read_word(&(flashDict[index].name)));
-//        count += serial_print_P(PSTR(" "));
-        count += serial_print_P(sp_str);
-      }
-      index++;
-  }
-  
-  pUserEntry = pLastUserEntry;
-  while(pUserEntry) {
-    if (count > 70) {
-        Serial.println();
-        count = 0;
+    uint8_t count = 0;
+    uint8_t index = 0;
+    uint8_t length = 0;
+    char* pChar;
+
+    while (pgm_read_word(&(flashDict[index].name))) {
+        if (count > 70) {
+            Serial.println();
+            count = 0;
+        }
+        if (!(pgm_read_word(&(flashDict[index].flags)) & SMUDGE)) {
+            count += serial_print_P((char*) pgm_read_word(&(flashDict[index].name)));
+            //        count += serial_print_P(PSTR(" "));
+            count += serial_print_P(sp_str);
+        }
+        index++;
     }
-    if (!(pUserEntry->flags & SMUDGE)) {
-      count += Serial.print(pUserEntry->name);
-//      count += serial_print_P(PSTR(" "));
-      count += serial_print_P(sp_str);
+
+    pUserEntry = pLastUserEntry;
+    while(pUserEntry) {
+        if (count > 70) {
+            Serial.println();
+            count = 0;
+        }
+        if (!(pUserEntry->flags & SMUDGE)) {
+            count += Serial.print(pUserEntry->name);
+            //      count += serial_print_P(PSTR(" "));
+            count += serial_print_P(sp_str);
+        }
+        pUserEntry = (userEntry_t*)pUserEntry->prevEntry;
     }
-    pUserEntry = (userEntry_t*)pUserEntry->prevEntry;
-  }
-  Serial.println();
+    Serial.println();
 }
 
 #endif
@@ -2138,16 +2201,16 @@ void _words(void) { // --
 #ifdef EN_EEPROM_OPS
 const PROGMEM char eeRead_str[] = "eeRead";
 void _eeprom_read(void) {             // address -- value
-  push(EEPROM.read(pop()));
+    push(EEPROM.read(pop()));
 }
 
 const PROGMEM char eeWrite_str[] = "eeWrite";
 void _eeprom_write(void) {             // value address -- 
-  char address;
-  char value;
-  address = (char) pop();
-  value = (char) pop();
-  EEPROM.write(address, value);
+    char address;
+    char value;
+    address = (char) pop();
+    value = (char) pop();
+    EEPROM.write(address, value);
 }
 
 void print2Hex(uint8_t n) {
@@ -2224,12 +2287,12 @@ void _eeprom_dump(void) {             // address count --
 #ifdef EN_ARDUINO_OPS
 const PROGMEM char freeMem_str[] = "freeMem";
 void _freeMem(void) { 
-  push(freeMem());
+    push(freeMem());
 }
 
 const PROGMEM char delay_str[] = "delay";
 void _delay(void) {
-  delay(pop());
+    delay(pop());
 }
 
 const PROGMEM char pinWrite_str[] = "pinWrite";
@@ -2238,7 +2301,7 @@ const PROGMEM char pinWrite_str[] = "pinWrite";
 // u1 is the pin and u2 is the value ( 1 or 0 ). To turn the LED attached to 
 // pin 13 on type "1 13 pinwrite" p.s. First change its pinMode to output
 void _pinWrite(void) {
-  digitalWrite(pop(),pop());
+    digitalWrite(pop(),pop());
 }
 
 const PROGMEM char pinMode_str[] = "pinMode";
@@ -2247,27 +2310,27 @@ const PROGMEM char pinMode_str[] = "pinMode";
 // u1 is the pin and u2 is the mode ( 1 or 0 ). To control the LED attached to
 // pin 13 to an output type "1 13 pinmode"
 void _pinMode(void) {
-  pinMode(pop(), pop());
+    pinMode(pop(), pop());
 }
 
 const PROGMEM char pinRead_str[] = "pinRead";
 void _pinRead(void) {
-  push(digitalRead(pop()));
+    push(digitalRead(pop()));
 }
 
 const PROGMEM char analogRead_str[] = "analogRead";
 void _analogRead(void) {
-  push(analogRead(pop()));
+    push(analogRead(pop()));
 }
 
 const PROGMEM char analogWrite_str[] = "analogWrite";
 void _analogWrite(void) {
-  analogWrite(pop(), pop());
+    analogWrite(pop(), pop());
 }
 
 const PROGMEM char to_name_str[] = ">name";
 void _toName(void) {
-  xtToName(pop());
+    xtToName(pop());
 }
 #endif
 
@@ -2295,7 +2358,7 @@ const PROGMEM flashEntry_t flashDict[] = {
     { s_quote_str,        _s_quote,         IMMEDIATE + COMP_ONLY },
     { dot_quote_str,      _dot_quote,       IMMEDIATE + COMP_ONLY },
     { variable_str,       _variable,        NORMAL },
-    
+
     /*****************************************************/
     /* Order does not matter after here                  */
     /*****************************************************/    
@@ -2446,9 +2509,9 @@ const PROGMEM flashEntry_t flashDict[] = {
 #ifdef TOOLS_SET
     { dot_s_str,          _dot_s,           NORMAL },
     { dump_str,           _dump,            NORMAL },
-    { eeDump_str,         _eeprom_dump,     NORMAL },
     { see_str,            _see,             NORMAL },
     { words_str,          _words,           NORMAL },
+    { eeload_str,       _eeLoad,        NORMAL },
 #endif
 
 #ifdef SEARCH_SET
@@ -2456,7 +2519,7 @@ const PROGMEM flashEntry_t flashDict[] = {
 
 #ifdef STRING_SET
 #endif
-    
+
 #ifdef EN_ARDUINO_OPS
     { freeMem_str,        _freeMem,         NORMAL },
     { delay_str,          _delay,           NORMAL },
@@ -2471,6 +2534,7 @@ const PROGMEM flashEntry_t flashDict[] = {
 #ifdef EN_EEPROM_OPS
     { eeRead_str,     _eeprom_read,    NORMAL },
     { eeWrite_str,    _eeprom_write,    NORMAL },
+    { eeDump_str,         _eeprom_dump,     NORMAL },
 #endif
 
     { NULL,           NULL,    NORMAL }
