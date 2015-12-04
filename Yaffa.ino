@@ -1,4 +1,4 @@
-/******************************************************************************/
+
 /**  YAFFA - Yet Another Forth for Arduino                                   **/
 /**  Version 0.6.1                                                           **/
 /**                                                                          **/
@@ -190,6 +190,7 @@ cell_t base;  // stores the number conversion radix
 /******************************************************************************/
 void setup(void) {                
   uint16_t mem;
+  uint8_t e1,e2;
   Serial.begin(19200);     // Open serial communications:
 
   flags = ECHO_ON;
@@ -201,6 +202,9 @@ void setup(void) {
   serial_print_P(PSTR("."));
   Serial.println(YAFFA_MINOR,DEC);
   serial_print_P(PSTR(" Copyright (C) 2012 Stuart Wood\r\n"));
+  serial_print_P(PSTR(" Additional Words by Andrew Holt (2015)\r\n"));
+  Serial.println();
+
   serial_print_P(PSTR(" This program comes with ABSOLUTELY NO WARRANTY.\r\n"));
   serial_print_P(PSTR(" This is free software, and you are welcome to\r\n"));
   serial_print_P(PSTR(" redistribute it under certain conditions.\r\n"));
@@ -239,6 +243,19 @@ void setup(void) {
   serial_print_P(PSTR(" ($"));
   Serial.print(mem, HEX);  
   serial_print_P(PSTR(") bytes free\r\n"));
+
+  serial_print_P(PSTR(" EEPROM Size:"));
+  Serial.println( EEPROM.length());
+
+  e1=EEPROM.read(0);
+  e2=EEPROM.read(1);
+
+  Serial.println();
+  if( (e1 == 0xff) && (e2 == 0xff )) {
+    serial_print_P(PSTR(" EEPROM Empty\r\n"));
+  } else {
+    serial_print_P(PSTR(" Load from EEPROM .... One day.\r\n"));
+  }
 
   serial_print_P(prompt_str);
 }
