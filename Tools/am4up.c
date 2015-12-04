@@ -55,6 +55,8 @@ void elfwait(int errc)
 {
     int c;
     // wait for response
+    // ATH might need to change 'k' to 'K'
+    //
     while ( (c=getchar() ) != '>' && c != 'k' && c != '|' ) {
         fputc(c,stderr);
         if (c==errc) { fprintf(stderr,"\nError - %c\n",errc); exit(2); }
