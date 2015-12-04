@@ -1,10 +1,25 @@
 
-BINS=am4up
-CC=gcc
+CC=g++
 CFLAGS=-g
 
-am4up:	am4up.c
-	$(CC) $(CFLAGS) $< -o $@
+BINS=yaffaLoad
+
+all:	$(BINS)
+
+yaffaLoad.o:	yaffaLoad.c
+	$(CC) -c $(CFLAGS) $? -o $@
+
+yaffaLoad:	yaffaLoad.o serialComms.o serialComms.h
+	$(CC) $(CFLAGS) yaffaLoad.o serialComms.o -o $@
+
+
+serialComms.o:	serialComms.c
+	$(CC) -c $(CLAGS) $? -o $@
 
 clean:
 	rm -f $(BINS) *.o cscope.out
+
+backup:	clean
+	./backup.sh
+
+

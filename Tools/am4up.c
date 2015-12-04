@@ -51,15 +51,18 @@ pu rtscts           No
 
 
 // wait for prompt -- errc is an error character
-void elfwait(int errc)
-{
+void elfwait(int errc) {
     int c;
     // wait for response
     // ATH might need to change 'k' to 'K'
     //
     while ( (c=getchar() ) != '>' && c != 'k' && c != '|' ) {
         fputc(c,stderr);
-        if (c==errc) { fprintf(stderr,"\nError - %c\n",errc); exit(2); }
+
+        if (c == errc) { 
+            fprintf(stderr,"\nError - %c\n",errc); 
+            exit(2);
+        }
     }
     fputc(c,stderr);
 }
@@ -67,10 +70,14 @@ void elfwait(int errc)
 
 int main(int argc, char *argv[]) {
     FILE *f=NULL;
+    FILE *logFile=NULL;
+
     time_t t0,t1;
     int c;
     int lastchar;
+
     fprintf(stderr,"am4up V2 by Al Williams\nhttp://www.hotsolder.com\nUploading ");
+
     if (argc>1) {
         fprintf(stderr,"%s...\n",argv[1]);
         f=fopen(argv[1],"r");
@@ -78,6 +85,12 @@ int main(int argc, char *argv[]) {
 
     if (!f) { 
         fprintf(stderr, "No file\n"); exit(1); 
+    }
+
+    logFile=fopen("/tmp/am4up.txt", "w");
+    if(!logFile) {
+        fprintf(stderr,"Failed to open logfile\n");
+        perror("logFile");
     }
 
     putchar('\r'); 
@@ -90,7 +103,8 @@ int main(int argc, char *argv[]) {
     while (lastchar!=EOF) {
         int c1;
         c= getc(f);
-        if (c==EOF && lastchar=='\n') break;
+        if (c==EOF && lastchar=='\n') 
+            break;
         // newline == CRLF
         if ((c=='\n'||c=='\r') && lastchar=='\n') continue; // blank line
 
@@ -101,7 +115,9 @@ int main(int argc, char *argv[]) {
             continue;
         }
         // remember  last character except leading blanks
-        if (c==EOF || lastchar!='\n' || !isspace(c)) lastchar=c;
+        if (c==EOF || lastchar!='\n' || !isspace(c)) 
+            lastchar=c;
+
         if (c=='\t') c=' ';
         if (c=='\n') c='\r';
         if (c==EOF) c='\r';  // final return
@@ -110,14 +126,22 @@ int main(int argc, char *argv[]) {
         do {
             c1=getchar(); 
             fputc(c1,stderr);
+            fputc(c1,logFile);
+            fflush(logFile);
+
         } while (c1!=c);
 
         if (c=='\r' || c==EOF) {
             elfwait('?');
         }
     }
+    fputc(0x1a,stderr);
+
     time(&t1);
     fprintf(stderr,"\nTransfer time=%ld seconds\n",t1-t0);
+    fprintf(logFile,"\nTransfer time=%ld seconds\n",t1-t0);
+    fflush(logFile);
+    fclose( logFile);
 
     return 0;
 }
