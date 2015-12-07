@@ -84,7 +84,7 @@
 /******************************************************************************/
 /** Uncomment for debug output                                               **/
 /******************************************************************************/
-//#define DEBUG
+// #define DEBUG
 
 /******************************************************************************/
 /** Major and minor revision numbers                                         **/
@@ -269,18 +269,23 @@ void loop(void) {
   cpSourceEnd = cpSource + getLine(cpSource, BUFFER_SIZE);
   if (cpSourceEnd > cpSource) {
     interpreter();
-    if (errorCode) errorCode = 0;
-    else {
+    if (errorCode) {
+        errorCode = 0;
+    } else {
       if (!state) {
         serial_print_P(ok_str);
         char i = tos + 1;
-        while(i--) Serial.print(".");
+        while(i--) {
+            Serial.print(".");
+        }
         Serial.println();
       }
     }
   }
-  if (state) serial_print_P(compile_prompt_str);
-  else serial_print_P(prompt_str);
+  if (state) 
+      serial_print_P(compile_prompt_str);
+  else 
+      serial_print_P(prompt_str);
 }
 
 /******************************************************************************/
@@ -323,10 +328,12 @@ uint8_t getLine(char* addr, uint8_t length) {
     } else if (inChar == 9 || inChar == 27) { // TAB or ECS
       if (flags & ECHO_ON) Serial.print("\a");         // Beep
     } else if(inChar == 13) {     // Carriage return
-      if (flags & ECHO_ON) Serial.println();
+      if (flags & ECHO_ON) 
+          Serial.println();
       break;
     } else {
-      if (flags & ECHO_ON) Serial.print(inChar);
+      if (flags & ECHO_ON) 
+          Serial.print(inChar);
       *addr++ = inChar;
       *addr = 0;
     }
