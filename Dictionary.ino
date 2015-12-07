@@ -2144,6 +2144,7 @@ void _eeLoad(void) {
     uint8_t idx=0;
     uint8_t exitFlag=0;
     uint8_t inByte;
+    uint8_t data;
     uint8_t lastByte=0;
     uint8_t rc;
     uint8_t blkCounter=0;
@@ -2177,9 +2178,13 @@ void _eeLoad(void) {
             lastByte = inByte;
             Serial.write(inByte);
             mySerial.write(inByte);
-            EEPROM.write( eepromIdx++, inByte);
 
-            delay(10);
+            data = EEPROM.read( eepromIdx );
+            if ( data != inByte ) {
+                EEPROM.write( eepromIdx, inByte);
+                delay(10);
+            }
+            eepromIdx++;
 
             if( inByte == 0x0a ) {
                 Serial.print(">> ");
@@ -2349,11 +2354,47 @@ void _eeprom_read(void) {             // address -- value
 
 const PROGMEM char eeWrite_str[] = "eeWrite";
 void _eeprom_write(void) {             // value address -- 
-    char address;
-    char value;
-    address = (char) pop();
-    value = (char) pop();
+    uint16_t address;
+    uint16_t value;
+    address = (uint16_t) pop();
+    value = (uint16_t) pop();
     EEPROM.write(address, value);
+}
+
+/*
+ * Set EEPROM contents to default, i.e. 0xff
+ *
+ * @param start - Start address
+ * @param len - Number of bytes to erase
+ *
+ * The caller passes the address and length on the stack, and then
+ * writes 0xff to each location.  To reduce 'wear' the byte is read first 
+ * and compared with 0xff, if it already is 0xff no write operation is performed.
+ */
+const PROGMEM char eeClear_str[] = "eeClear";
+void _eeprom_clear(void) {             // value address -- 
+    uint16_t start;
+    uint16_t len;
+    uint16_t end;
+    uint16_t idx;
+    uint8_t data;
+
+    len=pop();
+    start = pop();
+
+    end = start + len;
+
+    if( len > EEPROM.length() ) {
+        end = EEPROM.length() ;
+    }
+
+    for( idx = start; idx < end; idx++) {
+        data = EEPROM.read( idx );
+        if( data != 0xff ) {
+            EEPROM.write(idx,0xff);
+            delay(10);
+        }
+    }
 }
 
 void print2Hex(uint8_t n) {
@@ -2654,8 +2695,8 @@ const PROGMEM flashEntry_t flashDict[] = {
     { dump_str,           _dump,            NORMAL },
     { see_str,            _see,             NORMAL },
     { words_str,          _words,           NORMAL },
-    { eeload_str,       _eeLoad,        NORMAL },
-    { eeInterpret_str,   _eeInterpret,    NORMAL },
+    { eeload_str,        _eeLoad,           NORMAL },
+    { eeInterpret_str,   _eeInterpret,      NORMAL },
 #endif
 
 #ifdef SEARCH_SET
@@ -2677,8 +2718,9 @@ const PROGMEM flashEntry_t flashDict[] = {
 
 #ifdef EN_EEPROM_OPS
     { eeRead_str,     _eeprom_read,    NORMAL },
-    { eeWrite_str,    _eeprom_write,    NORMAL },
-    { eeDump_str,         _eeprom_dump,     NORMAL },
+    { eeWrite_str,    _eeprom_write,   NORMAL },
+    { eeDump_str,     _eeprom_dump,    NORMAL },
+    { eeClear_str,    _eeprom_clear,    NORMAL },
 #endif
 
     { NULL,           NULL,    NORMAL }

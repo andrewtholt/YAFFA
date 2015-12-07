@@ -100,6 +100,7 @@ asm(" .section .version\n"
 #define ALIGN_P(x)  x = (uint8_t*)((addr_t)(x + 1) & -2)
 #define ALIGN(x)  x = ((addr_t)(x + 1) & -2)
 
+void _eeInterpret(void);
 /******************************************************************************/
 /**  Text Buffers and Associated Registers                                   **/
 /******************************************************************************/
@@ -254,7 +255,8 @@ void setup(void) {
   if( (e1 == 0xff) && (e2 == 0xff )) {
     serial_print_P(PSTR(" EEPROM Empty\r\n"));
   } else {
-    serial_print_P(PSTR(" Load from EEPROM .... One day.\r\n"));
+    serial_print_P(PSTR(" Load from EEPROM.\r\n"));
+    _eeInterpret();
   }
 
   serial_print_P(prompt_str);
