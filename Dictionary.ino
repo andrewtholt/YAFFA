@@ -1987,13 +1987,156 @@ void _throw(void) {
 /**                          Programming Tools Set                            **/
 /*******************************************************************************/
 #ifdef TOOLS_SET
-// { eeload_str,       _eeLoad,        NORMAL },
+// { eeInterpret_str,   _eeInterpret,    NORMAL },
 
 #define SOH 0x01
 #define EOT 0x04
 #define ACK 0x06
 #define NAK 0x15
 #define CAN 0x18
+#define LF 0x0a
+#define CR 0x0d
+
+/*
+ * Reads a line of text ended by a CR (ASCII 0x0d) from EEPROM,
+ *
+ * Returns the length of the line.
+ * Writes the charcters to the buffer pointed to by addr
+ * And updates eeAddr (he EEPROM Address) up to the maximim length.
+ */
+uint8_t eeGetLine(char *addr, int16_t *eeAddr) {
+
+    uint8_t len=0;
+    uint8_t inChar;
+    char *start = addr;
+    bool exitFlag = false;
+    uint16_t length = BUFFER_SIZE;
+
+    do {
+        inChar = EEPROM.read((*eeAddr)++);
+        switch( inChar ) {
+            case CR:
+                exitFlag = true;
+                *addr = 0;
+                break;
+            case LF:
+                break;
+            case 0xff: // hit end of data.
+                exitFlag = true;
+                len=-1;
+                break;
+            default:
+                *addr++ = inChar;
+                *addr = 0;
+                len++;
+                break;
+        }
+
+        if( len > length ) {
+            exitFlag = true;
+        }
+    } while (exitFlag == false) ;
+    return( len );
+}
+
+const PROGMEM char eeInterpret_str[] = "eeInterpret";
+void _eeInterpret(void) {
+    uint8_t dataByte;
+    int16_t eeIdx=0;
+    uint8_t buffIdx = 0;
+    bool exitFlag=false;
+    uint8_t len=0;
+
+    mySerial.begin(9600);
+    mySerial.println("Debug Ready");
+
+    cpSource = &cInputBuffer[0];
+    cpToIn = cpSource;
+
+    memset( cpSource,' ', BUFFER_SIZE );
+
+    while( exitFlag == false) {
+        mySerial.print("eeIdx : ");
+        mySerial.println( eeIdx );
+
+        len = eeGetLine(cpSource, &eeIdx);
+
+        if( len < 255) {
+
+            mySerial.print("Len   : ");
+            mySerial.println( len );
+
+            cpSourceEnd = cpSource + len;
+
+            mySerial.println( cpSource );
+
+            if (cpSourceEnd > cpSource) {
+
+                mySerial.print("State(before):");
+                mySerial.println( state );
+
+                interpreter();
+
+                mySerial.print("State(before):");
+                mySerial.println( state );
+
+                mySerial.print("errorCode:");
+                mySerial.println(errorCode);
+
+                if( errorCode) {
+                    errorCode = 0;
+                    exitFlag = true;
+                } else {
+                    if(!state) {
+                        char i = tos + 1;
+                    }
+                }
+            }
+        } else {
+            exitFlag=true;
+        }
+    }
+
+    /*
+       dataByte = EEPROM.read(0);
+
+       if( dataByte == 0xff ) {
+       dataByte = EEPROM.read(1);
+       if (dataByte == 0xff ) {
+       push(-1);
+       return;
+       }
+       }
+       memset( cpSource,' ', BUFFER_SIZE );
+
+       for(eeIdx=0; ((eeIdx < EEPROM.length()) && (exitFlag == false)) ; eeIdx++) {
+       dataByte = EEPROM.read( eeIdx );
+       cpSource[buffIdx++] = dataByte;
+
+       if(dataByte == 0x0d) {
+       cpSource[buffIdx] = 0;
+       mySerial.println(cpSource);
+       interpreter();
+       if (errorCode) {
+       errorCode = 0;
+       exitFlag = true;
+       push(-1);
+       }
+
+       buffIdx = 0;
+       memset( cpSource,' ', BUFFER_SIZE );
+       }
+
+       if(dataByte == 0xff) {
+       mySerial.println("Hit end");
+       exitFlag = true;
+       memset( cpSource,' ', BUFFER_SIZE );
+       push(0);
+       }
+
+       }
+       */
+}
 
 const PROGMEM char eeload_str[] = "eeLoad";
 void _eeLoad(void) {
@@ -2299,7 +2442,7 @@ const PROGMEM char pinWrite_str[] = "pinWrite";
 // ( u1 u2 -- )
 // Write a high (1) or low (0) value to a digital pin 
 // u1 is the pin and u2 is the value ( 1 or 0 ). To turn the LED attached to 
-// pin 13 on type "1 13 pinwrite" p.s. First change its pinMode to output
+// pin 13 on type "13 1 pinwrite" p.s. First change its pinMode to output
 void _pinWrite(void) {
     digitalWrite(pop(),pop());
 }
@@ -2308,7 +2451,7 @@ const PROGMEM char pinMode_str[] = "pinMode";
 // ( u1 u2 -- )
 // Set the specified pin behavior to either an input (0) or output (1)
 // u1 is the pin and u2 is the mode ( 1 or 0 ). To control the LED attached to
-// pin 13 to an output type "1 13 pinmode"
+// pin 13 to an output type "13 1 pinmode"
 void _pinMode(void) {
     pinMode(pop(), pop());
 }
@@ -2512,6 +2655,7 @@ const PROGMEM flashEntry_t flashDict[] = {
     { see_str,            _see,             NORMAL },
     { words_str,          _words,           NORMAL },
     { eeload_str,       _eeLoad,        NORMAL },
+    { eeInterpret_str,   _eeInterpret,    NORMAL },
 #endif
 
 #ifdef SEARCH_SET
