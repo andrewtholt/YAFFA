@@ -252,11 +252,17 @@ void setup(void) {
   e2=EEPROM.read(1);
 
   Serial.println();
+  pinMode(14,0);
+
   if( (e1 == 0xff) && (e2 == 0xff )) {
     serial_print_P(PSTR(" EEPROM Empty\r\n"));
   } else {
     serial_print_P(PSTR(" Load from EEPROM.\r\n"));
-    _eeInterpret();
+    if( digitalRead(14) == 0) {
+        serial_print_P(PSTR(" Inhibited by in 14.\r\n"));
+    } else {
+        _eeInterpret();
+    }
   }
 
   serial_print_P(prompt_str);
