@@ -25,9 +25,10 @@ Stack:  n --
 Description:
     Pause for n milliseconds.
 
-Name:   
-Stack:  
+Name:   ?key 
+Stack:  -- flag
 Description:
+    Return true if there is a character waiting.
 
 Name:   
 Stack:  
