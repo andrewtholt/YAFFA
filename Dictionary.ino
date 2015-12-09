@@ -2039,6 +2039,15 @@ uint8_t eeGetLine(char *addr, int16_t *eeAddr) {
     return( len );
 }
 
+const PROGMEM char qkey_str[] = "?key";
+void _qkey(void) {
+    
+    if( Serial.available() > 0) {
+        push(-1);
+    } else {
+        push(0);
+    }
+}
 const PROGMEM char eeInterpret_str[] = "eeInterpret";
 void _eeInterpret(void) {
     uint8_t dataByte;
@@ -2141,13 +2150,11 @@ void _eeInterpret(void) {
 const PROGMEM char eeload_str[] = "eeLoad";
 void _eeLoad(void) {
     uint8_t incoming[132];
-    uint8_t idx=0;
     uint8_t exitFlag=0;
     uint8_t inByte;
     uint8_t data;
     uint8_t lastByte=0;
-    uint8_t rc;
-    uint8_t blkCounter=0;
+
     uint16_t eepromIdx=0;
 
     uint8_t seq;
@@ -2156,8 +2163,10 @@ void _eeLoad(void) {
     uint8_t cksum;
     long now;
 
+    /*
     mySerial.begin(9600);
     mySerial.println("Debug Ready");
+    */
 
     Serial.setTimeout(10000);
 
@@ -2166,6 +2175,7 @@ void _eeLoad(void) {
         while(!Serial.available()) {
         }
         inByte = Serial.read();
+//        mySerial.write(inByte);
 
         if( lastByte == '\r' && inByte == '\n' ) { // Empty line.
             Serial.write('\r');
@@ -2177,18 +2187,19 @@ void _eeLoad(void) {
         } else {
             lastByte = inByte;
             Serial.write(inByte);
-            mySerial.write(inByte);
+            EEPROM.write( eepromIdx, inByte);
 
             data = EEPROM.read( eepromIdx );
             if ( data != inByte ) {
                 EEPROM.write( eepromIdx, inByte);
                 delay(10);
             }
+
             eepromIdx++;
 
             if( inByte == 0x0a ) {
                 Serial.print(">> ");
-                mySerial.write(0x0d);
+//                mySerial.write(0x0d);
             }
         }
     }
@@ -2419,7 +2430,7 @@ void print4Hex(uint16_t n) {
 }
 
 void printHexLine(uint16_t offset) {
-    uint8_t i;
+    uint16_t i;
 
     for(i=offset;i < (offset + 0x10); i++) {
         print2Hex(EEPROM.read(i));
@@ -2427,7 +2438,7 @@ void printHexLine(uint16_t offset) {
 }
 
 void printAsciiLine(uint16_t offset) {
-    uint8_t i;
+    uint16_t i;
     uint8_t n;
 
     for(i=offset;i < (offset + 0x10); i++) {
@@ -2449,6 +2460,7 @@ void _eeprom_dump(void) {             // address count --
     char buf[17];
 
     cnt=(pop() + 0x0f) & 0xff0;
+    
     addr=pop() & 0xfff0;
 
     // Only 1K EEPROM
@@ -2697,6 +2709,7 @@ const PROGMEM flashEntry_t flashDict[] = {
     { words_str,          _words,           NORMAL },
     { eeload_str,        _eeLoad,           NORMAL },
     { eeInterpret_str,   _eeInterpret,      NORMAL },
+    { qkey_str,          _qkey,             NORMAL },
 #endif
 
 #ifdef SEARCH_SET
