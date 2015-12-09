@@ -1,0 +1,111 @@
+Partial glossary of Yaffa
+
+Name:   pinMode
+Stack:  pin mode --
+Description:
+    Sets IO pin direction.  Mode is 0 for input, 1 for output.
+
+Name:   analogRead
+Stack:  <analog channel> -- value
+Description:
+    Returns the value from an ADC.
+
+Name:   pinWrite
+Stack:  pin 1|0 --
+Description:
+    Set the output state of a IO pin.
+
+Name:   pinRead
+Stack:  pin -- value
+Description:
+    Get the state of a digital pin.
+
+Name:   delay
+Stack:  n --
+Description:
+    Pause for n milliseconds.
+
+Name:   
+Stack:  
+Description:
+
+Name:   
+Stack:  
+Description:
+
+Name:   
+Stack:  
+Description:
+
+Name:   
+Stack:  
+Description:
+
+Name:   
+Stack:  
+Description:
+
+Name:   
+Stack:  
+Description:
+
+Name:   
+Stack:  
+Description:
+
+Name:   
+Stack:  
+Description:
+
+Name:   
+Stack:  
+Description:
+
+Name:   
+Stack:  
+Description:
+
+Name:   
+Stack:  
+Description:
+
+Name:   
+Stack:  
+Description:
+
+Name:   
+Stack:  
+Description:
+
+Name:   
+Stack:  
+Description:
+
+Name:   
+Stack:  
+Description:
+
+Name:   
+Stack:  
+Description:
+
+Name:   
+Stack:  
+Description:
+
+Name:   
+Stack:  
+Description:
+
+Name:   
+Stack:  
+Description:
+
+Name:   
+Stack:  
+Description:
+
+Name:   
+Stack:  
+Description:
+
