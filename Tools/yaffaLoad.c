@@ -32,10 +32,11 @@ void usage() {
 
 void waitForEol(int fd ) {  // EOL is '| ' '>> '
     uint8_t c;
-    uint8_t pidx=0;
-    uint8_t cidx=0;
+    uint8_t pidx=0; // pipe index
+    uint8_t cidx=0; // chevron index
 
     while( true ) {
+        usleep(5000);
         read(fd, &c,1);
 
         if ( c == '|' ) {
@@ -52,6 +53,9 @@ void waitForEol(int fd ) {  // EOL is '| ' '>> '
             pidx=0;
         }
 
+        if ( c == ' ' && cidx == 1 ) {
+            cidx=0;
+        }
         if( c == ' ' && cidx == 2 ) {
             return;
         }
@@ -166,14 +170,15 @@ int main( int argc, char *argv[]) {
 
         if( strlen(outBuffer) > 1 ) {
             fprintf(stderr,"%s", ptr);
+            usleep(5000); // wait 1 ms
             len = write( ser, outBuffer, strlen( outBuffer ));
             write( ser,"\r",1 );
             read( ser, inBuffer, len );
             read( ser, outBuffer, 1);
             waitForEol( ser );
         }
-
     }
+    write( ser,"\x1a",1 );
 
     return(0);
 }
